@@ -319,43 +319,100 @@
 
     /* ===== Shared: CASIO keyboard (USB-MIDI) input ===== */
     const CasioMIDI = {
-      connected: false, muted: true, held: new Map(), _on: [], _off: [], badge: null,
+      connected: false, muted: true, state: 'waiting', _hint: true, held: new Map(), _on: [], _off: [], badge: null,
       onNote(fn) { this._on.push(fn); }, onRelease(fn) { this._off.push(fn); },
       // true = the page should NOT play its own sound (the keyboard speaker plays it)
       silent() { return this.connected && this.muted; },
       init() {
-        this._badge();
-        if (!navigator.requestMIDIAccess) return;
-        navigator.requestMIDIAccess().then(access => {
-          const refresh = () => {
-            const ins = [...access.inputs.values()];
-            ins.forEach(inp => inp.onmidimessage = e => this._msg(e.data));
-            this.connected = ins.length > 0;
-            this.name = ins[0] ? (ins[0].name || 'Keyboard') : '';
-            this._render();
-          };
-          access.onstatechange = refresh; refresh();
-        }).catch(() => {});
+        this._badge(); this._render();
+        // Web MIDI Browser (iPad) may inject its MIDI support after the page loads → wait up to 10 s
+        let tries = 0;
+        const attempt = () => {
+          if (navigator.requestMIDIAccess) return this._request();
+          if (++tries < 40) setTimeout(attempt, 250); else this._status('none');
+        };
+        attempt();
+        setTimeout(() => { this._hint = false; this._render(); }, 15000);   // hide 'looking / not found' after 15 s (errors stay)
       },
-      _msg([st, note, vel]) {
+      _request() {
+        let done = false;
+        const ok = access => { if (!done) { done = true; this._setup(access); } };
+        const ng = () => this._status('denied');
+        try {
+          const p = navigator.requestMIDIAccess({ sysex: false }, ok, ng);   // old shims use callbacks
+          if (p && typeof p.then === 'function') p.then(ok, ng);             // current spec uses a Promise
+        } catch (e) {
+          try { navigator.requestMIDIAccess().then(ok, ng); } catch (e2) { this._status('denied'); }
+        }
+      },
+      _inputs(access) {
+        let ins = access.inputs;
+        if (typeof ins === 'function') { try { ins = ins.call(access); } catch (e) { ins = null; } }   // old spec: inputs()
+        const out = [];
+        if (!ins) return out;
+        if (Array.isArray(ins)) return ins.slice();
+        if (typeof ins.forEach === 'function') { ins.forEach(v => out.push(v)); return out; }
+        if (typeof ins.values === 'function') { const it = ins.values(); for (let r = it.next(); !r.done; r = it.next()) out.push(r.value); }
+        return out;
+      },
+      _setup(access) {
+        this.state = 'ready';
+        const refresh = () => {
+          const ins = this._inputs(access);
+          ins.forEach(inp => {
+            if (!inp || inp.__casio) return;
+            inp.__casio = true;
+            const h = e => this._msg(e && e.data ? e.data : e);
+            inp.onmidimessage = h;
+            if (typeof inp.addEventListener === 'function') { try { inp.addEventListener('midimessage', h); } catch (e) {} }
+          });
+          const was = this.connected;
+          this.connected = this.connected || ins.length > 0;
+          if (ins.length === 0 && this._seen === 0) this.connected = false;
+          if (was !== this.connected || !this._drawn) { this._drawn = true; this._render(); }
+        };
+        this._seen = 0;
+        try { access.onstatechange = refresh; } catch (e) {}
+        refresh();
+        setInterval(refresh, 2000);   // some shims never fire statechange → poll
+      },
+      _status(st) { this.state = st; this._render(); },
+      _msg(d) {
+        if (!d || d.length < 2) return;
+        const st = d[0], note = d[1], vel = d.length > 2 ? d[2] : 0;
+        const key = st + ':' + note + ':' + vel, now = performance.now();
+        if (key === this._lastKey && now - this._lastAt < 8) return;      // same event delivered twice
+        this._lastKey = key; this._lastAt = now;
+        this._seen = (this._seen || 0) + 1;
+        if (!this.connected) { this.connected = true; this._render(); }
         const cmd = st & 0xf0;
         if (cmd === 0x90 && vel > 0) { this.held.set(note, vel); this._on.forEach(f => f(note, vel / 127)); }
         else if (cmd === 0x80 || (cmd === 0x90 && vel === 0)) { this.held.delete(note); this._off.forEach(f => f(note)); }
       },
       _badge() {
-        const b = document.createElement('button');
-        b.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:60;display:none;align-items:center;gap:8px;' +
-          'font:600 12px Inter,"Helvetica Neue",sans-serif;color:#111116;background:#fff;border:1px solid #E6E6EB;border-radius:999px;' +
-          'padding:7px 14px;cursor:pointer;box-shadow:0 6px 18px -10px rgba(0,0,0,.3)';
+        // top-centre status pill for the CASIO keyboard
+        const bar = document.createElement('div');
+        bar.style.cssText = 'position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:60;display:flex;gap:8px;align-items:center';
+        const pill = 'display:flex;align-items:center;gap:8px;font:600 12px Inter,"Helvetica Neue",sans-serif;color:#111116;background:#fff;' +
+          'border:1px solid #E6E6EB;border-radius:999px;padding:8px 14px;cursor:pointer;text-decoration:none;box-shadow:0 6px 18px -10px rgba(0,0,0,.3)';
+        const b = document.createElement('button'); b.style.cssText = pill + ';display:none';
         b.title = 'Click to switch the PC sound on/off';
         b.onclick = () => { this.muted = !this.muted; this._render(); };
-        document.body.appendChild(b); this.badge = b;
+        bar.appendChild(b); document.body.appendChild(bar); this.badge = b;
       },
       _render() {
         if (!this.badge) return;
-        this.badge.style.display = this.connected ? 'flex' : 'none';
-        this.badge.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:#2FBF71"></span>CASIO keyboard connected` +
-          `<span style="color:#8A8A96;font-weight:500">· PC sound ${this.muted ? 'off' : 'on'}</span>`;
+        const dot = c => `<span style="width:8px;height:8px;border-radius:50%;background:${c}"></span>`;
+        if (this.connected) {
+          this.badge.style.display = 'flex';
+          this.badge.innerHTML = `${dot('#2FBF71')}CASIO keyboard connected<span style="color:#8A8A96;font-weight:500">· PC sound ${this.muted ? 'off' : 'on'}</span>`;
+          return;
+        }
+        // short diagnostic so set-up problems are visible (hidden after 10 s)
+        const msg = { waiting: 'Looking for keyboard…', ready: 'No keyboard found — check the USB cable', none: 'This browser cannot read keyboards', denied: 'Keyboard access was blocked' }[this.state];
+        const keep = this.state === 'none' || this.state === 'denied';
+        this.badge.style.display = (this._hint || keep) && msg ? 'flex' : 'none';
+        this.badge.innerHTML = `${dot('#C9C9D2')}<span style="color:#8A8A96">${msg || ''}</span>`;
       }
     };
     CasioMIDI.init();

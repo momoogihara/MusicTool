@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MIDI Test</title>
+<style>
+  body { font: 16px -apple-system, "Helvetica Neue", sans-serif; margin: 0; padding: 24px; background: #fff; color: #111; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  p.sub { color: #888; margin: 0 0 18px; }
+  table { border-collapse: collapse; width: 100%; max-width: 760px; }
+  td { border-bottom: 1px solid #eee; padding: 10px 8px; vertical-align: top; }
+  td:first-child { color: #666; width: 220px; }
+  .ok { color: #12A150; font-weight: 700; } .ng { color: #E5383B; font-weight: 700; } .wait { color: #F08C00; font-weight: 700; }
+  #log { margin-top: 18px; max-width: 760px; height: 220px; overflow: auto; background: #F6F6F9; border-radius: 10px; padding: 10px; font: 13px Menlo, monospace; }
+</style>
+</head>
+<body>
+<h1>CASIO keyboard — connection test</h1>
+<p class="sub">Connect the keyboard, open this page, wait 10 seconds, press a few keys, then take a screenshot.</p>
+<table>
+  <tr><td>1. MIDI support in this app</td><td id="r1" class="wait">checking…</td></tr>
+  <tr><td>2. Access request</td><td id="r2" class="wait">—</td></tr>
+  <tr><td>3. Keyboards found</td><td id="r3" class="wait">—</td></tr>
+  <tr><td>4. Keys received</td><td id="r4" class="wait">press a key…</td></tr>
+  <tr><td>Details</td><td id="r5" style="font-size:12px;color:#666"></td></tr>
+</table>
+<div id="log"></div>
+<script>
+  const $ = id => document.getElementById(id);
+  const set = (id, cls, txt) => { $(id).className = cls; $(id).textContent = txt; };
+  const log = t => { const d = document.createElement('div'); d.textContent = new Date().toLocaleTimeString() + '  ' + t; $('log').prepend(d); };
+  window.onerror = (m) => log('ERROR: ' + m);
+  const wk = window.webkit && window.webkit.messageHandlers ? Object.keys(window.webkit.messageHandlers).join(', ') || '(none listed)' : 'no';
+  $('r5').textContent = 'UA: ' + navigator.userAgent + ' | webkit handlers: ' + wk;
+
+  let keys = 0, t0 = Date.now(), tries = 0;
+  function listInputs(a) {
+    let ins = a.inputs; const out = [];
+    if (typeof ins === 'function') { try { ins = ins.call(a); } catch (e) { log('inputs() error ' + e); ins = null; } }
+    if (!ins) return out;
+    if (Array.isArray(ins)) return ins.slice();
+    if (typeof ins.forEach === 'function') { ins.forEach(v => out.push(v)); return out; }
+    if (typeof ins.values === 'function') { const it = ins.values(); for (let r = it.next(); !r.done; r = it.next()) out.push(r.value); }
+    return out;
+  }
+  function onAccess(a) {
+    set('r2', 'ok', 'Granted (' + ((Date.now() - t0) / 1000).toFixed(1) + ' s) · inputs type: ' + (typeof a.inputs) + (a.inputs && a.inputs.constructor ? ' / ' + a.inputs.constructor.name : ''));
+    log('access granted');
+    const scan = () => {
+      const ins = listInputs(a);
+      if (ins.length) set('r3', 'ok', ins.length + ' — ' + ins.map(i => (i && (i.name || i.manufacturer)) || 'unnamed').join(', '));
+      else set('r3', 'ng', '0 — check cable / power, then reload');
+      ins.forEach(inp => {
+        if (!inp || inp.__t) return; inp.__t = true;
+        const h = e => { const d = e && e.data ? e.data : e; keys++; set('r4', 'ok', keys + ' messages · last: [' + Array.from(d || []).join(', ') + ']'); log('MIDI ' + Array.from(d || []).join(' ')); };
+        inp.onmidimessage = h;
+      });
+    };
+    scan(); setInterval(scan, 2000);
+    try { a.onstatechange = e => { log('statechange'); scan(); }; } catch (e) {}
+  }
+  function request() {
+    set('r1', 'ok', 'Yes (found after ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s)');
+    set('r2', 'wait', 'waiting for answer…');
+    let done = false;
+    const ok = a => { if (!done) { done = true; onAccess(a); } };
+    const ng = e => { set('r2', 'ng', 'Refused: ' + (e && (e.message || e.name) || e)); log('refused ' + e); };
+    try {
+      const p = navigator.requestMIDIAccess({ sysex: false }, ok, ng);
+      log('requestMIDIAccess returned ' + (p && typeof p.then === 'function' ? 'a Promise' : typeof p));
+      if (p && typeof p.then === 'function') p.then(ok, ng);
+    } catch (e) { ng(e); }
+    setTimeout(() => { if (!done && $('r2').className === 'wait') set('r2', 'ng', 'No answer after 10 s'); }, 10000);
+  }
+  (function poll() {
+    if (navigator.requestMIDIAccess) return request();
+    if (++tries < 60) return setTimeout(poll, 250);
+    set('r1', 'ng', 'No — this app/browser cannot read MIDI keyboards');
+  })();
+</script>
+</body>
+</html>
