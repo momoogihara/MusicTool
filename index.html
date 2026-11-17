@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>CASIO Interactive Music Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=Noto+Music&display=swap" rel="stylesheet">
+  <style>
+    :root { --ink: #111116; --muted: #8A8A96; --line: #ECECF1; --surface: #F6F6F9; }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { min-height: 100%; background: #fff; color: var(--ink); font-family: 'Inter', -apple-system, 'Helvetica Neue', 'Segoe UI', sans-serif; -webkit-font-smoothing: antialiased; }
+    .wrap { max-width: 1160px; margin: 0 auto; padding: 56px 32px 32px; }
+    header { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; margin-bottom: 28px; }
+    .eyebrow { font-size: .72rem; font-weight: 600; letter-spacing: .24em; color: var(--muted); }
+    h1 { font-size: clamp(2rem, 4.4vw, 3.2rem); font-weight: 800; letter-spacing: -.035em; line-height: 1; margin-top: 10px; }
+    .lead { color: var(--muted); font-size: .98rem; line-height: 1.55; max-width: 360px; text-align: right; }
+
+    .grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; }
+    .card { grid-column: span 2; display: flex; flex-direction: column; text-decoration: none; color: inherit; background: #fff; border: 1px solid var(--line); border-radius: 22px; overflow: hidden; transition: transform .18s ease, box-shadow .18s ease; }
+    .card.wide { grid-column: span 3; }
+    .card:hover, .card:active { transform: translateY(-3px); box-shadow: 0 24px 40px -28px rgba(17,17,22,.35); }
+    .art { height: 170px; display: grid; place-items: center; position: relative; overflow: hidden; }
+    .art svg { width: 100%; height: 100%; display: block; }
+    .body { padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+    .row { display: flex; align-items: center; gap: 8px; }
+    .level { font-size: .64rem; font-weight: 700; letter-spacing: .14em; padding: 4px 9px; border-radius: 999px; }
+    .num { margin-left: auto; font-size: .78rem; font-weight: 800; color: #C8C8D2; }
+    .card h2 { font-size: 1.35rem; font-weight: 800; letter-spacing: -.02em; }
+    .card p { font-size: .88rem; color: var(--muted); line-height: 1.5; }
+    .inputs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; padding-top: 8px; }
+    .inputs span { font-size: .7rem; font-weight: 600; color: #55555F; background: var(--surface); border-radius: 8px; padding: 5px 9px; }
+    .alt { font-size: .78rem; font-weight: 600; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; margin-top: 2px; align-self: flex-start; }
+
+    footer { display: flex; justify-content: space-between; align-items: center; margin-top: 26px; font-size: .8rem; color: var(--muted); }
+    footer a { color: var(--ink); font-weight: 600; text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; }
+
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr 1fr; } .card, .card.wide { grid-column: span 1; } header { flex-direction: column; align-items: flex-start; } .lead { text-align: left; } }
+    @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <div class="eyebrow">CASIO · INTERACTIVE MUSIC STUDIO</div>
+        <h1>Pick an experience</h1>
+      </div>
+      <div class="lead">Play with a CASIO keyboard, your voice or a tap on the screen. Use “← Menu” at the top to come back here.</div>
+    </header>
+
+    <div class="grid">
+      <a class="card" href="ForBeginner_Animal.html">
+        <div class="art" style="background:#FFF4EC" id="art-animal"></div>
+        <div class="body">
+          <div class="row"><span class="level" style="background:#FFE3D1;color:#D5591B">KIDS · BEGINNER</span><span class="num">01</span></div>
+          <h2>Sing &amp; Meet Animals</h2>
+          <p>Every note has its own animal friend. Play or sing a note and watch it pop up.</p>
+          <div class="inputs"><span>CASIO keyboard</span><span>Voice</span><span>Touch</span></div>
+        </div>
+      </a>
+
+      <a class="card" href="index_sheetMusic.html">
+        <div class="art" style="background:#EEF6FF" id="art-score"></div>
+        <div class="body">
+          <div class="row"><span class="level" style="background:#D9EBFF;color:#1F78D1">BEGINNER</span><span class="num">02</span></div>
+          <h2>Sing to Score</h2>
+          <p>Your melody is written onto real sheet music — then play it back.</p>
+          <div class="inputs"><span>CASIO keyboard</span><span>Voice</span><span>Touch</span></div>
+        </div>
+      </a>
+
+      <a class="card" href="ForIntermidiate_Pianist.html">
+        <div class="art" style="background:#F1F3FF" id="art-pianist"></div>
+        <div class="body">
+          <div class="row"><span class="level" style="background:#E0E6FF;color:#2546FF">INTERMEDIATE</span><span class="num">03</span></div>
+          <h2>30 Sec Pianist</h2>
+          <p>Read the score and play a whole song before the 30-second timer runs out.</p>
+          <div class="inputs"><span>CASIO keyboard</span><span>PC keys</span><span>Touch</span></div>
+        </div>
+      </a>
+
+      <a class="card wide" href="index_VisualizeWithkey.html">
+        <div class="art" style="background:#FAFAFB" id="art-visual"></div>
+        <div class="body">
+          <div class="row"><span class="level" style="background:#EDEDF2;color:#55555F">EVERYONE</span><span class="num">04</span></div>
+          <h2>Voice to Visual</h2>
+          <p>Sound becomes moving art. Pitch picks the colour, touch or volume sets the size.</p>
+          <div class="inputs"><span>CASIO keyboard</span><span>Voice</span><span>Touch</span></div>
+          <span class="alt" onclick="event.preventDefault(); location.href='index_VisualizesMusic.html'">Open screen-only version (no keyboard on screen) →</span>
+        </div>
+      </a>
+
+      <a class="card wide" href="IntaractiveExperience_Orchestra.html">
+        <div class="art" style="background:#FFF6EE" id="art-orch"></div>
+        <div class="body">
+          <div class="row"><span class="level" style="background:#FFE6D1;color:#E86A0C">EVERYONE</span><span class="num">05</span></div>
+          <h2>One Key Orchestra</h2>
+          <p>Build a band layer by layer — drums, bass, piano, strings — and play a melody on top.</p>
+          <div class="inputs"><span>CASIO keyboard</span><span>PC keys</span><span>Touch</span></div>
+        </div>
+      </a>
+    </div>
+
+    <footer>
+      <span>Best in Google Chrome (PC) or Web MIDI Browser (iPad).</span>
+      <a href="midi-test.html">Keyboard connection test</a>
+    </footer>
+  </div>
+
+  <script>
+    /* ===== Hand-drawn style animal illustrations (SVG, viewBox 0 0 100 100) ===== */
+    const INK = '#2B2B33';
+    const _eye = (x, y, s = 1) => `<ellipse cx="${x}" cy="${y}" rx="${3.6*s}" ry="${4.4*s}" fill="${INK}"/><circle cx="${x+1.3*s}" cy="${y-1.7*s}" r="${1.4*s}" fill="#fff"/>`;
+    const _cheek = (x, y, c = '#FF8FA3') => `<ellipse cx="${x}" cy="${y}" rx="5.2" ry="3.2" fill="${c}" opacity=".55"/>`;
+    const _smile = (x, y, w = 4) => `<path d="M${x-w} ${y} q${w/2} ${w*0.75} ${w} 0 q${w/2} ${w*0.75} ${w} 0" fill="none" stroke="${INK}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`;
+    const _nose = (x, y, c = INK, w = 7) => `<path d="M${x-w/2} ${y-2} Q${x} ${y-4} ${x+w/2} ${y-2} Q${x+w/2-0.5} ${y+2.5} ${x} ${y+3} Q${x-w/2+0.5} ${y+2.5} ${x-w/2} ${y-2}Z" fill="${c}"/>`;
+
+    const ANIMAL_SVG = {
+      LION: `
+        <g fill="#F29E4C">${Array.from({length:14},(_,i)=>{const a=i/14*Math.PI*2;return `<circle cx="${50+Math.cos(a)*33}" cy="${52+Math.sin(a)*33}" r="13"/>`}).join('')}<circle cx="50" cy="52" r="34"/></g>
+        <circle cx="29" cy="30" r="8" fill="#FFD48A"/><circle cx="29" cy="30" r="4" fill="#F7B267"/>
+        <circle cx="71" cy="30" r="8" fill="#FFD48A"/><circle cx="71" cy="30" r="4" fill="#F7B267"/>
+        <circle cx="50" cy="53" r="27" fill="#FFD48A"/>
+        <ellipse cx="50" cy="64" rx="12" ry="9" fill="#FFF1D6"/>
+        ${_eye(40,50)}${_eye(60,50)}${_cheek(33,60)}${_cheek(67,60)}
+        ${_nose(50,60,'#8A5A44')}${_smile(50,65,3.5)}`,
+      CAT: `
+        <path d="M22 44 L26 14 L46 30 Z" fill="#B9BECB"/><path d="M27 37 L29 21 L39 30 Z" fill="#FFB3C1"/>
+        <path d="M78 44 L74 14 L54 30 Z" fill="#B9BECB"/><path d="M73 37 L71 21 L61 30 Z" fill="#FFB3C1"/>
+        <ellipse cx="50" cy="55" rx="32" ry="28" fill="#C9CEDA"/>
+        <path d="M50 28 L46 38 M43 29 L42 37 M57 29 L58 37" stroke="#A5ABB9" stroke-width="2.4" stroke-linecap="round"/>
+        ${_eye(39,53)}${_eye(61,53)}${_cheek(31,63)}${_cheek(69,63)}
+        <path d="M47 61 L53 61 L50 64.5 Z" fill="#FF8FA3"/>${_smile(50,66,3.2)}
+        <path d="M14 58 L30 60 M14 66 L30 64 M86 58 L70 60 M86 66 L70 64" stroke="${INK}" stroke-width="1.3" stroke-linecap="round" opacity=".6"/>`,
+      RABBIT: `
+        <ellipse cx="37" cy="24" rx="9" ry="22" fill="#F1E6DE" stroke="#E0CFC3" stroke-width="1.5" transform="rotate(-10 37 24)"/>
+        <ellipse cx="37" cy="26" rx="4.5" ry="15" fill="#FFC2CF" transform="rotate(-10 37 26)"/>
+        <ellipse cx="63" cy="24" rx="9" ry="22" fill="#F1E6DE" stroke="#E0CFC3" stroke-width="1.5" transform="rotate(10 63 24)"/>
+        <ellipse cx="63" cy="26" rx="4.5" ry="15" fill="#FFC2CF" transform="rotate(10 63 26)"/>
+        <ellipse cx="50" cy="62" rx="30" ry="27" fill="#F7EEE8" stroke="#E0CFC3" stroke-width="1.5"/>
+        ${_eye(39,59)}${_eye(61,59)}${_cheek(31,68)}${_cheek(69,68)}
+        <ellipse cx="50" cy="67" rx="3.2" ry="2.4" fill="#FF8FA3"/>
+        <path d="M50 69 V72 M46 74 Q50 77 50 72 Q50 77 54 74" fill="none" stroke="${INK}" stroke-width="1.7" stroke-linecap="round"/>`,
+      SQUIRREL: `
+        <path d="M56 90 C98 94 104 46 88 22 C78 8 56 12 62 28 C66 38 82 42 80 58 C78 72 64 76 56 90Z" fill="#D9895A"/>
+        <path d="M70 22 C84 24 92 40 90 56" fill="none" stroke="#EDB48C" stroke-width="5" stroke-linecap="round"/>
+        <path d="M24 30 L28 14 L40 28 Z" fill="#C9744A"/><path d="M62 28 L70 14 L74 30 Z" fill="#C9744A"/>
+        <ellipse cx="48" cy="54" rx="28" ry="27" fill="#C9744A"/>
+        <ellipse cx="48" cy="64" rx="17" ry="14" fill="#F6DCC4"/>
+        ${_eye(38,50)}${_eye(58,50)}${_cheek(30,60)}${_cheek(66,60)}
+        ${_nose(48,58,'#5E3A28',6)}${_smile(48,63,3)}
+        <rect x="45" y="65" width="6" height="5" rx="1.2" fill="#fff" stroke="#E5CDB7" stroke-width=".8"/>`,
+      ELEPHANT: `
+        <ellipse cx="20" cy="50" rx="18" ry="22" fill="#9DB3C8"/><ellipse cx="22" cy="51" rx="11" ry="15" fill="#FFC9D3"/>
+        <ellipse cx="80" cy="50" rx="18" ry="22" fill="#9DB3C8"/><ellipse cx="78" cy="51" rx="11" ry="15" fill="#FFC9D3"/>
+        <ellipse cx="50" cy="48" rx="27" ry="26" fill="#B3C6D8"/>
+        <path d="M43 60 C43 74 44 86 52 90 C58 92 62 88 58 84 C54 82 56 74 57 60 Z" fill="#B3C6D8"/>
+        <path d="M45 72 h10 M46 79 h9" stroke="#9DB3C8" stroke-width="1.8" stroke-linecap="round"/>
+        ${_eye(39,46)}${_eye(61,46)}${_cheek(31,57)}${_cheek(69,57)}`,
+      FOX: `
+        <path d="M18 46 L22 12 L44 32 Z" fill="#F07F3C"/><path d="M24 38 L25 21 L37 32 Z" fill="#3A2C2C"/>
+        <path d="M82 46 L78 12 L56 32 Z" fill="#F07F3C"/><path d="M76 38 L75 21 L63 32 Z" fill="#3A2C2C"/>
+        <path d="M14 46 C14 30 30 26 50 26 C70 26 86 30 86 46 C86 64 66 84 50 86 C34 84 14 64 14 46Z" fill="#F38B47"/>
+        <path d="M14 48 C24 54 38 56 50 72 C62 56 76 54 86 48 C84 66 66 84 50 86 C34 84 16 66 14 48Z" fill="#FFF4EA"/>
+        ${_eye(37,50)}${_eye(63,50)}${_cheek(29,62,'#FF8F80')}${_cheek(71,62,'#FF8F80')}
+        <ellipse cx="50" cy="76" rx="4" ry="3" fill="${INK}"/>${_smile(50,80,3)}`,
+      PANDA: `
+        <circle cx="25" cy="27" r="12" fill="${INK}"/><circle cx="75" cy="27" r="12" fill="${INK}"/>
+        <ellipse cx="50" cy="55" rx="34" ry="31" fill="#FFFFFF" stroke="#E4E4EA" stroke-width="2"/>
+        <ellipse cx="36" cy="52" rx="9" ry="11" fill="${INK}" transform="rotate(25 36 52)"/>
+        <ellipse cx="64" cy="52" rx="9" ry="11" fill="${INK}" transform="rotate(-25 64 52)"/>
+        <circle cx="37" cy="52" r="3.4" fill="#fff"/><circle cx="38" cy="51" r="1.6" fill="${INK}"/>
+        <circle cx="63" cy="52" r="3.4" fill="#fff"/><circle cx="62" cy="51" r="1.6" fill="${INK}"/>
+        ${_cheek(27,66)}${_cheek(73,66)}
+        <ellipse cx="50" cy="65" rx="4.5" ry="3.2" fill="${INK}"/>${_smile(50,70,3)}`,
+      GIRAFFE: `
+        <path d="M38 22 V10 M62 22 V10" stroke="#C98A4B" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="38" cy="9" r="5" fill="#B5743C"/><circle cx="62" cy="9" r="5" fill="#B5743C"/>
+        <ellipse cx="18" cy="34" rx="12" ry="6" fill="#F7C548" transform="rotate(-20 18 34)"/><ellipse cx="18" cy="34" rx="6" ry="3" fill="#FFB3C1" transform="rotate(-20 18 34)"/>
+        <ellipse cx="82" cy="34" rx="12" ry="6" fill="#F7C548" transform="rotate(20 82 34)"/><ellipse cx="82" cy="34" rx="6" ry="3" fill="#FFB3C1" transform="rotate(20 82 34)"/>
+        <path d="M24 44 C24 26 36 18 50 18 C64 18 76 26 76 44 C76 56 72 64 72 70 C72 84 62 92 50 92 C38 92 28 84 28 70 C28 64 24 56 24 44Z" fill="#F9CF5C"/>
+        <circle cx="34" cy="30" r="5" fill="#E2A33E"/><circle cx="66" cy="28" r="4" fill="#E2A33E"/><circle cx="58" cy="22" r="3" fill="#E2A33E"/>
+        <ellipse cx="50" cy="76" rx="20" ry="14" fill="#F3B87A"/>
+        <ellipse cx="43" cy="74" rx="2.2" ry="3" fill="#8A5A44"/><ellipse cx="57" cy="74" rx="2.2" ry="3" fill="#8A5A44"/>
+        ${_eye(38,48)}${_eye(62,48)}${_cheek(31,58)}${_cheek(69,58)}${_smile(50,82,3.5)}`,
+      KOALA: `
+        <circle cx="20" cy="38" r="18" fill="#9EA3AF"/><circle cx="21" cy="40" r="11" fill="#E9E5EE"/>
+        <circle cx="80" cy="38" r="18" fill="#9EA3AF"/><circle cx="79" cy="40" r="11" fill="#E9E5EE"/>
+        <ellipse cx="50" cy="56" rx="30" ry="28" fill="#B1B5C1"/>
+        ${_eye(37,52)}${_eye(63,52)}${_cheek(29,66)}${_cheek(71,66)}
+        <ellipse cx="50" cy="62" rx="7.5" ry="10" fill="${INK}"/><ellipse cx="48" cy="57" rx="2.2" ry="3" fill="#fff" opacity=".6"/>
+        ${_smile(50,76,3)}`,
+      ALLIGATOR: `
+        <circle cx="34" cy="30" r="13" fill="#6DC36F"/><circle cx="66" cy="30" r="13" fill="#6DC36F"/>
+        <circle cx="34" cy="29" r="8" fill="#fff"/><circle cx="66" cy="29" r="8" fill="#fff"/>
+        ${_eye(35,30,1.1)}${_eye(65,30,1.1)}
+        <path d="M14 56 C14 40 30 36 50 36 C70 36 86 40 86 56 C86 72 72 82 50 82 C28 82 14 72 14 56Z" fill="#7BCB7C"/>
+        <path d="M20 64 C34 70 66 70 80 64" fill="none" stroke="#4E9E54" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M30 66 l3 5 l3 -4 M44 68 l3 5 l3 -5 M58 68 l3 5 l3 -5" fill="#fff" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/>
+        <ellipse cx="42" cy="47" rx="2.4" ry="1.8" fill="#3F8A46"/><ellipse cx="58" cy="47" rx="2.4" ry="1.8" fill="#3F8A46"/>
+        <circle cx="28" cy="52" r="1.6" fill="#5DAF62"/><circle cx="72" cy="52" r="1.6" fill="#5DAF62"/><circle cx="24" cy="58" r="1.4" fill="#5DAF62"/><circle cx="76" cy="58" r="1.4" fill="#5DAF62"/>
+        ${_cheek(25,60,'#FF9AA2')}${_cheek(75,60,'#FF9AA2')}`,
+      FLAMINGO: `
+        <path d="M34 94 C26 76 48 72 44 58" fill="none" stroke="#FF92B4" stroke-width="12" stroke-linecap="round"/>
+        <path d="M42 18 C38 10 46 6 48 13" fill="none" stroke="#FF7BA5" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="44" cy="42" r="25" fill="#FFA1C0"/>
+        <path d="M64 33 C78 30 90 38 89 50 L88 58 C86 63 80 61 81 55 C82 48 76 46 66 49 Z" fill="#FFF3E6"/>
+        <path d="M88.4 50 L88 58 C86 63 80 61 81 55 C81.5 52 84 50 88.4 50Z" fill="${INK}"/>
+        ${_eye(36,38)}${_eye(54,38)}${_cheek(30,50,'#FF6B95')}${_cheek(58,50,'#FF6B95')}${_smile(45,50,3)}`,
+      BIRD: `
+        <path d="M48 18 C44 8 52 6 54 14 C56 6 64 10 56 20" fill="#3E9FD6"/>
+        <ellipse cx="50" cy="56" rx="34" ry="32" fill="#63B9E8"/>
+        <ellipse cx="50" cy="68" rx="20" ry="17" fill="#DDF2FC"/>
+        <path d="M16 58 C10 66 16 76 26 74 C24 68 22 62 16 58Z" fill="#3E9FD6"/>
+        <path d="M84 58 C90 66 84 76 74 74 C76 68 78 62 84 58Z" fill="#3E9FD6"/>
+        ${_eye(39,48)}${_eye(61,48)}${_cheek(31,58)}${_cheek(69,58)}
+        <path d="M44 55 L56 55 L50 63 Z" fill="#FFB547" stroke="#F09A2A" stroke-width="1" stroke-linejoin="round"/>`
+    };
+
+    const animalSVG = (name) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${ANIMAL_SVG[name] || ''}</svg>`;
+    const ANIMAL_IMG = {};
+    Object.keys(ANIMAL_SVG).forEach(name => {
+      const img = new Image();
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(animalSVG(name));
+      ANIMAL_IMG[name] = img;
+    });
+
+    /* ===== Shared: microphone + pitch detection ===== */
+    const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+    const PITCH_COLORS = ['#FF5A5F','#FF7F3F','#FFA62B','#F5C02E','#8CCB3A','#2FBF71','#20B8AE','#2FA4E7','#4C74F6','#7B61FF','#B05CEB','#F2569F'];
+    const hexToRgb = h => { const n = parseInt(h.slice(1), 16); return { r: n >> 16 & 255, g: n >> 8 & 255, b: n & 255 }; };
+    const freqToMidi = f => Math.round(12 * Math.log2(f / 440)) + 69;
+    const midiToFreq = m => 440 * Math.pow(2, (m - 69) / 12);
+
+    function autoCorrelate(buf, sampleRate) {
+      let size = buf.length, rms = 0;
+      for (let i = 0; i < size; i++) rms += buf[i] * buf[i];
+      rms = Math.sqrt(rms / size);
+      if (rms < 0.01) return -1;
+      let r1 = 0, r2 = size - 1;
+      const thres = 0.2;
+      for (let i = 0; i < size / 2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
+      for (let i = 1; i < size / 2; i++) if (Math.abs(buf[size - i]) < thres) { r2 = size - i; break; }
+      buf = buf.slice(r1, r2); size = buf.length;
+      const maxLag = Math.min(size, Math.floor(sampleRate / 60));   // ignore below ~60 Hz (faster)
+      const c = new Float32Array(maxLag);
+      for (let i = 0; i < maxLag; i++) { let s = 0; for (let j = 0; j < size - i; j++) s += buf[j] * buf[j + i]; c[i] = s; }
+      let d = 0; while (d < maxLag - 1 && c[d] > c[d + 1]) d++;
+      let maxval = -1, maxpos = -1;
+      for (let i = d; i < maxLag; i++) if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
+      if (maxpos <= 0) return -1;
+      let T0 = maxpos;
+      const x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1] || 0;
+      const a = (x1 + x3 - 2 * x2) / 2, b = (x3 - x1) / 2;
+      if (a) T0 = T0 - b / (2 * a);
+      return sampleRate / T0;
+    }
+
+    const Mic = {
+      ctx: null, analyser: null, buf: null, freq: null, ready: false,
+      async init() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('Please open this page in the latest Google Chrome.');
+        this.ctx = this.ctx || new (window.AudioContext || window.webkitAudioContext)();
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+        const src = this.ctx.createMediaStreamSource(stream);
+        this.analyser = this.ctx.createAnalyser();
+        this.analyser.fftSize = 2048;
+        this.analyser.smoothingTimeConstant = 0.75;
+        this.buf = new Float32Array(this.analyser.fftSize);
+        this.freq = new Uint8Array(this.analyser.frequencyBinCount);
+        src.connect(this.analyser);
+        await this.ctx.resume();
+        this.ready = true;
+      },
+      audioCtx() { this.ctx = this.ctx || new (window.AudioContext || window.webkitAudioContext)(); return this.ctx; },
+      // returns { volume 0..1, pitch Hz or -1 }
+      read(noise = 0.06) {
+        if (!this.ready) return { volume: 0, pitch: -1 };
+        this.analyser.getFloatTimeDomainData(this.buf);
+        this.analyser.getByteFrequencyData(this.freq);
+        let s = 0; for (let i = 0; i < this.buf.length; i++) s += this.buf[i] * this.buf[i];
+        const volume = Math.min(1, Math.sqrt(s / this.buf.length) * 4);
+        let pitch = -1;
+        if (volume > noise) { const p = autoCorrelate(this.buf, this.ctx.sampleRate); if (p > 80 && p < 1100) pitch = p; }
+        return { volume, pitch };
+      }
+    };
+
+    // Median filter + "must hold N frames" so the note does not flicker
+    function createStabilizer(history = 5, holdFrames = 3) {
+      const hist = []; let cand = null, count = 0, stable = null;
+      return {
+        push(pitch) {
+          if (pitch < 0) { hist.length = 0; cand = null; count = 0; stable = null; return null; }
+          hist.push(pitch); if (hist.length > history) hist.shift();
+          const med = [...hist].sort((a, b) => a - b)[hist.length >> 1];
+          const midi = freqToMidi(med);
+          if (midi === cand) count++; else { cand = midi; count = 1; }
+          if (count >= holdFrames) stable = { midi, freq: med };
+          return stable;
+        }
+      };
+    }
+
+    // Soft synth used for chords / notes
+    function playTone(ctx, freqs, { dur = 1.2, vol = 0.09, type = 'triangle', attack = 0.01 } = {}) {
+      const t = ctx.currentTime;
+      const out = ctx.createGain();
+      out.gain.setValueAtTime(0.0001, t);
+      out.gain.exponentialRampToValueAtTime(vol, t + attack);
+      out.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      out.connect(ctx.destination);
+      freqs.forEach(f => {
+        const o = ctx.createOscillator(); o.type = type; o.frequency.value = f;
+        const o2 = ctx.createOscillator(); o2.type = 'sine'; o2.frequency.value = f * 2;
+        const g2 = ctx.createGain(); g2.gain.value = 0.25;
+        o.connect(out); o2.connect(g2); g2.connect(out);
+        o.start(t); o2.start(t); o.stop(t + dur + 0.05); o2.stop(t + dur + 0.05);
+      });
+    }
+
+    // Light 2-octave keyboard (C3–B4) drawn on canvas. Returns key rects for hit testing.
+    function drawLightKeyboard(ctx, x, y, w, h, activeMidi, activeColor) {
+      const whites = [0, 2, 4, 5, 7, 9, 11];
+      const kw = w / 14; const rects = [];
+      for (let o = 0; o < 2; o++) whites.forEach((pc, i) => {
+        const idx = o * 7 + i, midi = 48 + o * 12 + pc, kx = x + idx * kw;
+        const on = activeMidi === midi;
+        ctx.fillStyle = on ? activeColor : '#FFFFFF';
+        ctx.strokeStyle = '#E2E2E8'; ctx.lineWidth = 1;
+        roundRectPath(ctx, kx + 1.5, y, kw - 3, h, [0, 0, 8, 8]); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = on ? '#FFFFFF' : '#B6B6C2';
+        ctx.font = '600 12px Inter, "Helvetica Neue", sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(NOTE_NAMES[pc] + (3 + o), kx + kw / 2, y + h - 14);
+        rects.push({ midi, x: kx, y, w: kw, h, black: false });
+      });
+      const blacks = [[1, 0], [3, 1], [6, 3], [8, 4], [10, 5]];
+      for (let o = 0; o < 2; o++) blacks.forEach(([pc, after]) => {
+        const midi = 48 + o * 12 + pc; const bx = x + (o * 7 + after + 1) * kw - kw * 0.3; const bw = kw * 0.6, bh = h * 0.6;
+        const on = activeMidi === midi;
+        ctx.fillStyle = on ? activeColor : '#1E1E26';
+        roundRectPath(ctx, bx, y, bw, bh, [0, 0, 6, 6]); ctx.fill();
+        rects.push({ midi, x: bx, y, w: bw, h: bh, black: true });
+      });
+      return rects;
+    }
+    function roundRectPath(ctx, x, y, w, h, r) { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); }
+    function hitKey(rects, px, py) {
+      const inR = r => px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h;
+      return (rects.find(r => r.black && inR(r)) || rects.find(r => !r.black && inR(r)) || {}).midi;
+    }
+    const foldMidi = m => { while (m < 48) m += 12; while (m > 71) m -= 12; return m; };
+
+    /* ===== Shared: CASIO keyboard (USB-MIDI) input ===== */
+    const CasioMIDI = {
+      connected: false, muted: true, state: 'waiting', _hint: true, held: new Map(), _on: [], _off: [], badge: null,
+      onNote(fn) { this._on.push(fn); }, onRelease(fn) { this._off.push(fn); },
+      // true = the page should NOT play its own sound (the keyboard speaker plays it)
+      silent() { return this.connected && this.muted; },
+      init() {
+        this._badge(); this._render();
+        // Web MIDI Browser (iPad) may inject its MIDI support after the page loads → wait up to 10 s
+        let tries = 0;
+        const attempt = () => {
+          if (navigator.requestMIDIAccess) return this._request();
+          if (++tries < 40) setTimeout(attempt, 250); else this._status('none');
+        };
+        attempt();
+        setTimeout(() => { this._hint = false; this._render(); }, 15000);   // hide the set-up hint after 15 s
+      },
+      _request() {
+        let done = false;
+        const ok = access => { if (!done) { done = true; this._setup(access); } };
+        const ng = () => this._status('denied');
+        try {
+          const p = navigator.requestMIDIAccess({ sysex: false }, ok, ng);   // old shims use callbacks
+          if (p && typeof p.then === 'function') p.then(ok, ng);             // current spec uses a Promise
+        } catch (e) {
+          try { navigator.requestMIDIAccess().then(ok, ng); } catch (e2) { this._status('denied'); }
+        }
+      },
+      _inputs(access) {
+        let ins = access.inputs;
+        if (typeof ins === 'function') { try { ins = ins.call(access); } catch (e) { ins = null; } }   // old spec: inputs()
+        const out = [];
+        if (!ins) return out;
+        if (Array.isArray(ins)) return ins.slice();
+        if (typeof ins.forEach === 'function') { ins.forEach(v => out.push(v)); return out; }
+        if (typeof ins.values === 'function') { const it = ins.values(); for (let r = it.next(); !r.done; r = it.next()) out.push(r.value); }
+        return out;
+      },
+      _setup(access) {
+        this.state = 'ready';
+        const refresh = () => {
+          const ins = this._inputs(access);
+          ins.forEach(inp => {
+            if (!inp || inp.__casio) return;
+            inp.__casio = true;
+            const h = e => this._msg(e && e.data ? e.data : e);
+            inp.onmidimessage = h;
+            if (typeof inp.addEventListener === 'function') { try { inp.addEventListener('midimessage', h); } catch (e) {} }
+          });
+          const was = this.connected;
+          this.connected = this.connected || ins.length > 0;
+          if (ins.length === 0 && this._seen === 0) this.connected = false;
+          if (was !== this.connected || !this._drawn) { this._drawn = true; this._render(); }
+        };
+        this._seen = 0;
+        try { access.onstatechange = refresh; } catch (e) {}
+        refresh();
+        setInterval(refresh, 2000);   // some shims never fire statechange → poll
+      },
+      _status(st) { this.state = st; this._render(); },
+      _msg(d) {
+        if (!d || d.length < 2) return;
+        const st = d[0], note = d[1], vel = d.length > 2 ? d[2] : 0;
+        const key = st + ':' + note + ':' + vel, now = performance.now();
+        if (key === this._lastKey && now - this._lastAt < 8) return;      // same event delivered twice
+        this._lastKey = key; this._lastAt = now;
+        this._seen = (this._seen || 0) + 1;
+        if (!this.connected) { this.connected = true; this._render(); }
+        const cmd = st & 0xf0;
+        if (cmd === 0x90 && vel > 0) { this.held.set(note, vel); this._on.forEach(f => f(note, vel / 127)); }
+        else if (cmd === 0x80 || (cmd === 0x90 && vel === 0)) { this.held.delete(note); this._off.forEach(f => f(note)); }
+      },
+      _badge() {
+        // top-centre status pill for the CASIO keyboard
+        const bar = document.createElement('div');
+        bar.style.cssText = 'position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:60;display:flex;gap:8px;align-items:center';
+        const pill = 'display:flex;align-items:center;gap:8px;font:600 12px Inter,"Helvetica Neue",sans-serif;color:#111116;background:#fff;' +
+          'border:1px solid #E6E6EB;border-radius:999px;padding:8px 14px;cursor:pointer;text-decoration:none;box-shadow:0 6px 18px -10px rgba(0,0,0,.3)';
+        const b = document.createElement('button'); b.style.cssText = pill + ';display:none';
+        b.title = 'Click to switch the PC sound on/off';
+        b.onclick = () => { this.muted = !this.muted; this._render(); };
+        // "← Menu" back link on every tool page (not on the menu itself)
+        const path = location.pathname;
+        const onMenu = /\/$|index\.html$/.test(path) && !/index_/.test(path);
+        if (!onMenu) { const menu = document.createElement('a'); menu.href = 'index.html'; menu.textContent = '← Menu'; menu.style.cssText = pill; bar.appendChild(menu); }
+        bar.appendChild(b); document.body.appendChild(bar); this.badge = b;
+      },
+      _render() {
+        if (!this.badge) return;
+        const dot = c => `<span style="width:8px;height:8px;border-radius:50%;background:${c}"></span>`;
+        if (this.connected) {
+          this.badge.style.display = 'flex';
+          this.badge.innerHTML = `${dot('#2FBF71')}CASIO keyboard connected<span style="color:#8A8A96;font-weight:500">· PC sound ${this.muted ? 'off' : 'on'}</span>`;
+          return;
+        }
+        // short diagnostic so set-up problems are visible (hidden after 10 s)
+        const msg = { waiting: 'Looking for keyboard…', ready: 'No keyboard found — check the USB cable', none: 'This browser cannot read keyboards', denied: 'Keyboard access was blocked' }[this.state];
+        this.badge.style.display = this._hint && msg ? 'flex' : 'none';
+        this.badge.innerHTML = `${dot('#C9C9D2')}<span style="color:#8A8A96">${msg || ''}</span>`;
+      }
+    };
+    CasioMIDI.init();
+
+    // ---------- card illustrations ----------
+    const svg = (inner, vb = '0 0 360 170') => `<svg viewBox="${vb}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+    const img = (name, x, y, s) => `<image href="${ANIMAL_IMG[name].src}" x="${x - s / 2}" y="${y - s / 2}" width="${s}" height="${s}"/>`;
+
+    document.getElementById('art-animal').innerHTML = svg(
+      img('RABBIT', 92, 92, 86) + img('LION', 180, 84, 112) + img('PANDA', 268, 92, 86) +
+      [[60,40,'#FF5A5F'],[300,36,'#2FA4E7'],[136,30,'#F5C02E'],[230,140,'#8CCB3A'],[40,128,'#B05CEB'],[318,130,'#FF7F3F']]
+        .map(([x,y,c]) => `<circle cx="${x}" cy="${y}" r="5" fill="${c}"/>`).join(''));
+
+    (() => {
+      let s = ''; const top = 52, sp = 14;
+      for (let i = 0; i < 5; i++) s += `<line x1="30" x2="330" y1="${top + i * sp}" y2="${top + i * sp}" stroke="#C5D6EA" stroke-width="1.4"/>`;
+      s += `<text x="34" y="${top + sp * 3.2}" font-size="${sp * 5.2}" font-family="Noto Music, Apple Symbols, Segoe UI Symbol, serif" fill="#111116">&#x1D11E;</text>`;
+      const steps = [0, 2, 4, 3, 1, 4, 6]; const names = ['LION','RABBIT','ELEPHANT','FOX','RABBIT','ELEPHANT','BIRD']; const pc = [0,2,4,5,2,4,11];
+      const st = [0,1,2,3,1,2,6];
+      st.forEach((d, i) => { const x = 104 + i * 34, y = top + sp * 4 - (d - 2) * sp / 2; s += img(names[i], x, y, 32); });
+      document.getElementById('art-score').innerHTML = svg(s);
+    })();
+
+    (() => {
+      let s = ''; const top = 50, sp = 13;
+      for (let i = 0; i < 5; i++) s += `<line x1="24" x2="336" y1="${top + i * sp}" y2="${top + i * sp}" stroke="#C9CDE6" stroke-width="1.3"/>`;
+      s += `<text x="28" y="${top + sp * 3.2}" font-size="${sp * 5.2}" font-family="Noto Music, Apple Symbols, Segoe UI Symbol, serif" fill="#111116">&#x1D11E;</text>`;
+      const notes = [2,2,2,2,2,2,2,4,0,1,2]; const cols = ['#12A150','#12A150','#12A150','#12A150','#12A150','#F08C00','#2546FF','#111116','#111116','#111116','#111116'];
+      notes.forEach((d, i) => {
+        const x = 92 + i * 23, y = top + sp * 4 - (d - 2) * sp / 2, c = cols[i];
+        if (i === 6) s += `<circle cx="${x}" cy="${y}" r="13" fill="#2546FF" opacity=".12"/>`;
+        s += `<ellipse cx="${x}" cy="${y}" rx="${sp * .62}" ry="${sp * .44}" transform="rotate(-20 ${x} ${y})" fill="${c}"/>`;
+        s += `<line x1="${x + sp * .58}" x2="${x + sp * .58}" y1="${y}" y2="${y - sp * 3.2}" stroke="${c}" stroke-width="1.5"/>`;
+        if (d === 0) s += `<line x1="${x - 11}" x2="${x + 11}" y1="${y}" y2="${y}" stroke="#111116" stroke-width="1.3"/>`;
+      });
+      s += `<rect x="24" y="142" width="312" height="4" rx="2" fill="#E0E3F3"/><rect x="24" y="142" width="196" height="4" rx="2" fill="#111116"/>`;
+      s += `<text x="336" y="132" text-anchor="end" font-size="20" font-weight="800" font-family="Inter, sans-serif" fill="#111116">18.4</text>`;
+      document.getElementById('art-pianist').innerHTML = svg(s);
+    })();
+
+    (() => {
+      const C = PITCH_COLORS; let s = '<g style="mix-blend-mode:multiply">';
+      s += `<circle cx="150" cy="86" r="58" fill="${C[0]}" opacity=".85"/><circle cx="214" cy="80" r="46" fill="${C[7]}" opacity=".85"/>`;
+      s += `<path d="M228 132 a40 40 0 0 1 80 0z" fill="${C[3]}" opacity=".9"/><polygon points="70,140 104,80 138,140" fill="${C[9]}" opacity=".85"/>`;
+      s += `<rect x="236" y="24" width="90" height="14" fill="${C[11]}" transform="rotate(-14 280 31)" opacity=".85"/>`;
+      s += `</g><circle cx="300" cy="104" r="22" fill="none" stroke="${C[5]}" stroke-width="5"/>`;
+      for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) s += `<circle cx="${44 + i * 10}" cy="${28 + j * 10}" r="2.2" fill="#111116"/>`;
+      let ticks = ''; for (let i = 0; i < 60; i++) { const a = i / 60 * Math.PI * 2, l = 4 + Math.abs(Math.sin(i * .7)) * 12; ticks += `<line x1="${180 + Math.cos(a) * 30}" y1="${86 + Math.sin(a) * 30}" x2="${180 + Math.cos(a) * (30 + l)}" y2="${86 + Math.sin(a) * (30 + l)}" stroke="#111116" stroke-width="1.2" opacity=".7"/>`; }
+      s += ticks + `<circle cx="180" cy="86" r="30" fill="none" stroke="#111116" stroke-width="1"/>`;
+      let w = 'M0 140'; for (let x = 0; x <= 360; x += 6) w += ` L${x} ${140 + Math.sin(x / 11) * 8 * Math.sin(x / 70)}`;
+      s += `<path d="${w}" fill="none" stroke="#111116" stroke-width="1.3"/>`;
+      document.getElementById('art-visual').innerHTML = svg(s);
+    })();
+
+    (() => {
+      let s = ''; const rows = [['k','','h','','s','','h','','k','','h','','s','','h',''], ['n','','n','','n','','n','','n','','n','','n','','n',''], ['n','','','','n','','n','','','','n','','n','','',''], ['bar']];
+      const x0 = 30, y0 = 28, cw = 18.8, ch = 26;
+      rows.forEach((r, ri) => {
+        const y = y0 + ri * (ch + 8);
+        if (r[0] === 'bar') { s += `<rect x="${x0}" y="${y}" width="${cw * 16 - 4}" height="${ch}" rx="6" fill="#FFE8D6"/><rect x="${x0 + 6}" y="${y + ch / 2 - 4}" width="${cw * 16 - 16}" height="8" rx="4" fill="#111116"/>`; return; }
+        r.forEach((c, i) => {
+          const x = x0 + i * cw, head = i === 4;
+          s += `<rect x="${x}" y="${y}" width="${cw - 4}" height="${ch}" rx="5" fill="${head ? '#FFD3B0' : (i % 4 === 0 ? '#F3EDE7' : '#F8F3EE')}"/>`;
+          if (!c) return;
+          const cx = x + (cw - 4) / 2, cy = y + ch / 2, col = head ? '#FF7A1A' : '#111116';
+          if (c === 'k') s += `<circle cx="${cx}" cy="${cy}" r="5.5" fill="${col}"/>`;
+          else if (c === 's') s += `<rect x="${cx - 4.5}" y="${cy - 4.5}" width="9" height="9" rx="2" fill="${col}"/>`;
+          else if (c === 'h') s += `<circle cx="${cx}" cy="${cy}" r="2.5" fill="${col}"/>`;
+          else s += `<circle cx="${cx}" cy="${cy}" r="4" fill="${ri === 2 ? '#C9C3BC' : col}"/>`;
+        });
+      });
+      document.getElementById('art-orch').innerHTML = svg(s);
+    })();
+  </script>
+</body>
+</html>

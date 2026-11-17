@@ -328,7 +328,7 @@
           if (++tries < 40) setTimeout(attempt, 250); else this._status('none');
         };
         attempt();
-        setTimeout(() => { this._hint = false; this._render(); }, 15000);   // hide 'looking / not found' after 15 s (errors stay)
+        setTimeout(() => { this._hint = false; this._render(); }, 15000);   // hide the set-up hint after 15 s
       },
       _request() {
         let done = false;
@@ -394,6 +394,10 @@
         const b = document.createElement('button'); b.style.cssText = pill + ';display:none';
         b.title = 'Click to switch the PC sound on/off';
         b.onclick = () => { this.muted = !this.muted; this._render(); };
+        // "← Menu" back link on every tool page (not on the menu itself)
+        const path = location.pathname;
+        const onMenu = /\/$|index\.html$/.test(path) && !/index_/.test(path);
+        if (!onMenu) { const menu = document.createElement('a'); menu.href = 'index.html'; menu.textContent = '← Menu'; menu.style.cssText = pill; bar.appendChild(menu); }
         bar.appendChild(b); document.body.appendChild(bar); this.badge = b;
       },
       _render() {
@@ -406,8 +410,7 @@
         }
         // short diagnostic so set-up problems are visible (hidden after 10 s)
         const msg = { waiting: 'Looking for keyboard…', ready: 'No keyboard found — check the USB cable', none: 'This browser cannot read keyboards', denied: 'Keyboard access was blocked' }[this.state];
-        const keep = this.state === 'none' || this.state === 'denied';
-        this.badge.style.display = (this._hint || keep) && msg ? 'flex' : 'none';
+        this.badge.style.display = this._hint && msg ? 'flex' : 'none';
         this.badge.innerHTML = `${dot('#C9C9D2')}<span style="color:#8A8A96">${msg || ''}</span>`;
       }
     };
