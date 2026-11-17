@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>One Key Orchestra — CASIO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #111116; --muted: #8A8A96; --line: #E8E8EE; --surface: #F6F6F9;
+      --accent: #FF7A1A; --accent-soft: #FFF1E6;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #fff; color: var(--ink); font-family: 'Inter', 'Helvetica Neue', 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; overflow: hidden; }
+    .app { height: 100vh; max-width: 1180px; margin: 0 auto; padding: 22px 32px 20px; display: grid; grid-template-rows: auto auto 1fr auto; gap: 16px; }
+
+    /* Header + transport */
+    header { display: flex; justify-content: space-between; align-items: center; }
+    .eyebrow { font-size: .7rem; font-weight: 600; letter-spacing: .22em; color: var(--muted); }
+    h1 { font-size: 1.7rem; font-weight: 800; letter-spacing: -.02em; margin-top: 4px; }
+    h1 span { color: var(--accent); transition: color .3s; }
+    .transport { display: flex; align-items: center; gap: 18px; }
+    .beats { display: flex; gap: 7px; }
+    .beats i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); transition: background .06s, transform .06s; }
+    .beats i.on { background: var(--accent); transform: scale(1.35); }
+    .bpm { text-align: right; }
+    .bpm .v { font-size: 1.35rem; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; }
+    .bpm .k { font-size: .6rem; font-weight: 600; letter-spacing: .2em; color: var(--muted); margin-top: 3px; }
+    .play { width: 54px; height: 54px; border-radius: 50%; border: 0; background: var(--ink); color: #fff; cursor: pointer; display: grid; place-items: center; transition: transform .15s, background .2s; }
+    .play:hover { transform: scale(1.06); background: var(--accent); }
+    .play svg { width: 20px; height: 20px; }
+
+    /* Step labels */
+    .step-h { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+    .step-h .n { font-size: .7rem; font-weight: 800; color: #fff; background: var(--ink); border-radius: 6px; padding: 3px 7px; }
+    .step-h .t { font-size: .95rem; font-weight: 700; }
+    .step-h .d { font-size: .8rem; color: var(--muted); }
+
+    /* 1. Styles */
+    .styles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .style { text-align: left; font: inherit; color: inherit; background: #fff; border: 1.5px solid var(--line); border-radius: 14px; padding: 12px 14px; cursor: pointer; transition: border-color .2s, background .2s, transform .15s; position: relative; }
+    .style:hover { transform: translateY(-2px); }
+    .style .sw { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+    .style .nm { font-weight: 700; font-size: .95rem; }
+    .style .ds { font-size: .74rem; color: var(--muted); margin-top: 4px; }
+    .style.on { border-color: var(--accent); background: var(--accent-soft); }
+
+    /* 2. Mixer / sequencer */
+    .mixer { border: 1px solid var(--line); border-radius: 18px; padding: 8px; display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+    .track { display: grid; grid-template-columns: 300px 1fr; gap: 14px; align-items: center; padding: 8px; border-radius: 12px; cursor: pointer; transition: background .2s; }
+    .track:hover { background: var(--surface); }
+    .tinfo { display: flex; align-items: center; gap: 12px; }
+    .ticon { width: 42px; height: 42px; border-radius: 12px; background: var(--surface); display: grid; place-items: center; transition: background .2s; }
+    .ticon svg { width: 24px; height: 24px; stroke: var(--muted); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: stroke .2s; }
+    .tname { font-weight: 700; font-size: .95rem; }
+    .tsub { font-size: .72rem; color: var(--muted); margin-top: 2px; }
+    .kbd { white-space: nowrap; margin-left: auto; font-size: .7rem; font-weight: 700; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 6px; padding: 3px 8px; color: var(--muted); background: #fff; }
+    .switch { width: 34px; height: 20px; border-radius: 20px; background: var(--line); position: relative; transition: background .2s; flex: none; }
+    .switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .2s; }
+    .track.on .switch { background: var(--accent); }
+    .track.on .switch::after { transform: translateX(14px); }
+    .track.on .ticon { background: var(--accent-soft); }
+    .track.on .ticon svg { stroke: var(--accent); }
+    .track.flash { background: var(--accent-soft); }
+
+    .lane { display: grid; grid-template-columns: repeat(16, 1fr); gap: 4px; height: 38px; }
+    .cell { border-radius: 6px; background: var(--surface); position: relative; display: grid; place-items: center; transition: background .08s; }
+    .cell:nth-child(4n+1) { background: #EFEFF4; }
+    .cell.head { background: #E2E2EA; }
+    .cell .hit { border-radius: 50%; background: #CFCFD8; transition: background .15s, transform .08s; }
+    .track.on .cell .hit { background: var(--ink); }
+    .track.on .cell.head .hit { background: var(--accent); transform: scale(1.4); }
+    .cell .hit.k { width: 14px; height: 14px; } .cell .hit.s { width: 12px; height: 12px; border-radius: 3px; } .cell .hit.h { width: 6px; height: 6px; }
+    .cell .hit.n { width: 10px; height: 10px; }
+    .cell .lbl { position: absolute; bottom: 2px; font-size: .55rem; font-weight: 600; color: var(--muted); }
+    .sustain { position: absolute; left: 4px; right: 4px; height: 8px; border-radius: 8px; background: #CFCFD8; }
+    .track.on .sustain { background: var(--ink); }
+    .rec-hint { font-size: .72rem; color: var(--accent); font-weight: 600; }
+
+    /* 3. Melody keyboard */
+    .melody { display: flex; flex-direction: column; align-items: center; }
+    .keys { position: relative; display: flex; padding: 8px 8px 0; background: var(--ink); border-radius: 14px 14px 6px 6px; box-shadow: 0 20px 40px -24px rgba(0,0,0,.5); }
+    .wk { width: 70px; height: 150px; margin: 0 2px; background: linear-gradient(#fff 85%, #F1F1F4); border-radius: 0 0 9px 9px; box-shadow: inset 0 -5px 0 #E3E3E8; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 12px; gap: 4px; cursor: pointer; user-select: none; transition: transform .05s, background .1s; }
+    .wk b { font-size: 1rem; color: #B8B8C2; }
+    .wk span { font-size: .65rem; font-weight: 700; color: #C4C4CC; }
+    .wk.on { background: linear-gradient(#fff, var(--accent)); transform: translateY(3px); box-shadow: inset 0 -2px 0 var(--accent); }
+    .wk.on b, .wk.on span { color: #fff; }
+    .bk { position: absolute; top: 8px; width: 42px; height: 92px; background: linear-gradient(#2A2A33, #16161C); border-radius: 0 0 6px 6px; pointer-events: none; z-index: 2; }
+
+    /* Start overlay */
+    #intro { position: fixed; inset: 0; background: rgba(255,255,255,.88); backdrop-filter: blur(10px); z-index: 50; display: flex; align-items: center; justify-content: center; }
+    .card { width: min(620px, 92vw); background: #fff; border: 1px solid var(--line); border-radius: 24px; padding: 40px; text-align: center; box-shadow: 0 40px 80px -40px rgba(0,0,0,.35); }
+    .card h2 { font-size: 2.4rem; font-weight: 800; letter-spacing: -.03em; line-height: 1.05; margin-top: 12px; }
+    .card p { color: var(--muted); margin-top: 12px; line-height: 1.55; }
+    .how { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 24px; text-align: left; }
+    .how div { background: var(--surface); border-radius: 14px; padding: 14px; font-size: .8rem; color: var(--muted); line-height: 1.45; }
+    .how b { display: block; color: var(--ink); font-size: .9rem; margin-bottom: 4px; }
+    .btn { margin-top: 26px; font: 600 1rem 'Inter', sans-serif; color: #fff; background: var(--ink); border: 0; border-radius: 999px; padding: 15px 40px; cursor: pointer; transition: transform .15s, background .2s; }
+    .btn:hover { transform: translateY(-2px); background: var(--accent); }
+    .ghostbtn { font: 600 .75rem 'Inter', sans-serif; border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 4px 10px; cursor: pointer; color: var(--muted); margin-left: 8px; }
+
+    @media (max-height: 820px) { .wk { height: 120px; } .bk { height: 72px; } .lane { height: 30px; } .track { padding: 5px 8px; } .app { gap: 12px; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <div class="eyebrow">CASIO · MUSIC BUILDER</div>
+        <h1>One Key <span>Orchestra</span></h1>
+      </div>
+      <div class="transport">
+        <div class="beats"><i></i><i></i><i></i><i></i></div>
+        <div class="bpm"><div class="v" id="bpm">105</div><div class="k">BPM</div></div>
+        <button class="play" id="play" title="Play / Stop (Space)"></button>
+      </div>
+    </header>
+
+    <section>
+      <div class="step-h"><span class="n">1</span><span class="t">Pick a style</span><span class="d">Changes tempo, bass line and melody</span></div>
+      <div class="styles" id="styles"></div>
+    </section>
+
+    <section style="display:flex;flex-direction:column;min-height:0">
+      <div class="step-h"><span class="n">2</span><span class="t">Add instruments</span><span class="d">Click a row, press <b>Q W E R</b>, or CASIO <b>C3 D3 E3 F3</b> — each layer joins on the beat</span></div>
+      <div class="mixer" id="mixer"></div>
+    </section>
+
+    <section class="melody">
+      <div class="step-h"><span class="n">3</span><span class="t">Play the melody on top</span><span class="d">CASIO <b>C4 – C5</b>, keys <b>1 – 8</b>, or click</span><span id="rec-note"></span></div>
+      <div class="keys" id="keys"></div>
+    </section>
+  </div>
+
+  <div id="intro">
+    <div class="card">
+      <div class="eyebrow">CASIO · ONE KEY ORCHESTRA</div>
+      <h2>Build a whole band<br>with one finger</h2>
+      <p>A loop is always running. Switch instruments on and off, then play your own melody over the top.</p>
+      <div class="how">
+        <div><b>1 · Style</b>Bollywood, Indie Pop, EDM — or record your own loop.</div>
+        <div><b>2 · Layers</b>Q Drums · W Bass · E Piano · R Strings</div>
+        <div><b>3 · Melody</b>Keys 1–8 play one octave, C to C.</div>
+      </div>
+      <button class="btn" id="start">Start studio</button>
+      <p style="font-size:.82rem;margin-top:12px">Using a CASIO keyboard? Click Start once, then play — C3 D3 E3 F3 switch instruments, C4–C5 play the melody.</p>
+    </div>
+  </div>
+
+  <script>
+    /* ===== Shared: CASIO keyboard (USB-MIDI) input ===== */
+    const CasioMIDI = {
+      connected: false, muted: true, held: new Map(), _on: [], _off: [], badge: null,
+      onNote(fn) { this._on.push(fn); }, onRelease(fn) { this._off.push(fn); },
+      // true = the page should NOT play its own sound (the keyboard speaker plays it)
+      silent() { return this.connected && this.muted; },
+      init() {
+        this._badge();
+        if (!navigator.requestMIDIAccess) return;
+        navigator.requestMIDIAccess().then(access => {
+          const refresh = () => {
+            const ins = [...access.inputs.values()];
+            ins.forEach(inp => inp.onmidimessage = e => this._msg(e.data));
+            this.connected = ins.length > 0;
+            this.name = ins[0] ? (ins[0].name || 'Keyboard') : '';
+            this._render();
+          };
+          access.onstatechange = refresh; refresh();
+        }).catch(() => {});
+      },
+      _msg([st, note, vel]) {
+        const cmd = st & 0xf0;
+        if (cmd === 0x90 && vel > 0) { this.held.set(note, vel); this._on.forEach(f => f(note, vel / 127)); }
+        else if (cmd === 0x80 || (cmd === 0x90 && vel === 0)) { this.held.delete(note); this._off.forEach(f => f(note)); }
+      },
+      _badge() {
+        const b = document.createElement('button');
+        b.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:60;display:none;align-items:center;gap:8px;' +
+          'font:600 12px Inter,"Helvetica Neue",sans-serif;color:#111116;background:#fff;border:1px solid #E6E6EB;border-radius:999px;' +
+          'padding:7px 14px;cursor:pointer;box-shadow:0 6px 18px -10px rgba(0,0,0,.3)';
+        b.title = 'Click to switch the PC sound on/off';
+        b.onclick = () => { this.muted = !this.muted; this._render(); };
+        document.body.appendChild(b); this.badge = b;
+      },
+      _render() {
+        if (!this.badge) return;
+        this.badge.style.display = this.connected ? 'flex' : 'none';
+        this.badge.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:#2FBF71"></span>CASIO keyboard connected` +
+          `<span style="color:#8A8A96;font-weight:500">· PC sound ${this.muted ? 'off' : 'on'}</span>`;
+      }
+    };
+    CasioMIDI.init();
+
+    /* ---------- Data ---------- */
+    const STYLES = {
+      bollywood: { name: 'Bollywood', desc: 'Festive groove · A minor', color: '#FF7A1A', soft: '#FFF1E6', bpm: 105, bass: [110, 110, 110, 98], melody: [440, 554.37, 659.25, 880, 659.25, 554.37, 440, 329.63] },
+      pop:       { name: 'Indie Pop', desc: 'Bright & bouncy · C major', color: '#F2569F', soft: '#FEEAF3', bpm: 115, bass: [130.81, 130.81, 110, 98], melody: [523.25, 659.25, 783.99, 1046.5, 783.99, 659.25, 523.25, 392] },
+      edm:       { name: 'Electro EDM', desc: 'Club energy · A minor', color: '#4C74F6', soft: '#EBF0FF', bpm: 128, bass: [110, 130.81, 146.83, 98], melody: [440, 523.25, 659.25, 783.99, 880, 783.99, 659.25, 523.25] },
+      custom:    { name: 'Create your own', desc: 'Your melody becomes the loop', color: '#16A34A', soft: '#E8F7EE', bpm: 110, bass: [130.81, 130.81, 110, 98], melody: [] }
+    };
+    const TRACKS = [
+      { id: 'drums',   key: 'q', casio: 'C3', name: 'Drums',   sub: 'Kick · snare · hi-hat',  icon: '<ellipse cx="12" cy="7" rx="8" ry="3"/><path d="M4 7v9c0 1.7 3.6 3 8 3s8-1.3 8-3V7"/><path d="M4 11c0 1.7 3.6 3 8 3s8-1.3 8-3"/>' },
+      { id: 'bass',    key: 'w', casio: 'D3', name: 'Bass',    sub: 'Low groove line',        icon: '<path d="M3 17c3 0 4-3 6-3s3 3 6 3 4-3 6-3"/><path d="M3 11c3 0 4-3 6-3s3 3 6 3 4-3 6-3"/>' },
+      { id: 'piano',   key: 'e', casio: 'E3', name: 'Piano',   sub: 'Style melody',           icon: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 5v8M12 5v8M16 5v8M7 13h2M11 13h2M15 13h2"/>' },
+      { id: 'strings', key: 'r', casio: 'F3', name: 'Strings', sub: 'Long warm chord',        icon: '<path d="M4 18c4-10 12-10 16 0"/><path d="M7 18c3-6 7-6 10 0"/><path d="M10 18c1-2 3-2 4 0"/>' }
+    ];
+    const SOLO = [['C', 261.63, '1'], ['D', 293.66, '2'], ['E', 329.63, '3'], ['F', 349.23, '4'], ['G', 392.0, '5'], ['A', 440.0, '6'], ['B', 493.88, '7'], ['C', 523.25, '8']];
+    const NAME_BY_FREQ = f => { const m = Math.round(12 * Math.log2(f / 440)) + 69; return ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'][m % 12]; };
+
+    /* ---------- State ---------- */
+    const S = { style: 'bollywood', on: { drums: true, bass: false, piano: false, strings: false }, playing: false, step: 0, custom: Array(16).fill(null) };
+
+    /* ---------- Build UI ---------- */
+    const stylesEl = document.getElementById('styles');
+    Object.entries(STYLES).forEach(([id, st]) => {
+      const b = document.createElement('button'); b.className = 'style'; b.dataset.id = id;
+      b.innerHTML = `<div class="nm"><span class="sw" style="background:${st.color}"></span>${st.name}</div><div class="ds">${st.desc} · ${st.bpm} BPM</div>`;
+      b.onclick = () => setStyle(id); stylesEl.appendChild(b);
+    });
+
+    const mixer = document.getElementById('mixer');
+    TRACKS.forEach(t => {
+      const row = document.createElement('div'); row.className = 'track'; row.dataset.id = t.id;
+      row.innerHTML = `<div class="tinfo"><div class="switch"></div><div class="ticon"><svg viewBox="0 0 24 24">${t.icon}</svg></div><div><div class="tname">${t.name}</div><div class="tsub" id="sub-${t.id}">${t.sub}</div></div><div class="kbd">${t.key.toUpperCase()} · ${t.casio}</div></div><div class="lane" id="lane-${t.id}"></div>`;
+      row.onclick = () => toggle(t.id); mixer.appendChild(row);
+    });
+
+    const keysEl = document.getElementById('keys');
+    SOLO.forEach(([n, f, k], i) => {
+      const w = document.createElement('div'); w.className = 'wk'; w.dataset.i = i;
+      w.innerHTML = `<b>${n}</b><span>${k}</span>`;
+      w.addEventListener('pointerdown', () => solo(i)); keysEl.appendChild(w);
+    });
+    [0, 1, 3, 4, 5].forEach(i => { const b = document.createElement('div'); b.className = 'bk'; b.style.left = `${8 + 74 * (i + 1) - 21}px`; keysEl.appendChild(b); });
+
+    function renderLanes() {
+      const st = STYLES[S.style];
+      // drums
+      let h = '';
+      for (let s = 0; s < 16; s++) { const k = s % 4 === 0 ? 'k' : s % 8 === 4 ? 's' : s % 2 ? 'h' : ''; h += `<div class="cell">${k ? `<div class="hit ${k}"></div>` : ''}</div>`; }
+      document.getElementById('lane-drums').innerHTML = h;
+      // bass
+      h = '';
+      for (let s = 0; s < 16; s++) { const on = s % 2 === 0; h += `<div class="cell">${on ? `<div class="hit n"></div>${s % 4 === 0 ? `<span class="lbl">${NAME_BY_FREQ(st.bass[s >> 2])}</span>` : ''}` : ''}</div>`; }
+      document.getElementById('lane-bass').innerHTML = h;
+      // piano
+      h = '';
+      for (let s = 0; s < 16; s++) {
+        let f = null;
+        if (S.style === 'custom') f = S.custom[s];
+        else if (s % 2 === 0) f = st.melody[(s >> 1) % st.melody.length];
+        h += `<div class="cell">${f ? `<div class="hit n"></div><span class="lbl">${NAME_BY_FREQ(f)}</span>` : ''}</div>`;
+      }
+      document.getElementById('lane-piano').innerHTML = h;
+      // strings
+      h = '<div class="cell" style="grid-column:1 / span 16"><div class="sustain"></div></div>';
+      document.getElementById('lane-strings').innerHTML = h;
+      document.getElementById('sub-piano').textContent = S.style === 'custom' ? 'Your recorded loop' : 'Style melody';
+      document.getElementById('rec-note').innerHTML = S.style === 'custom'
+        ? `<span class="rec-hint">● Recording into the Piano row</span><button class="ghostbtn" id="clear-loop">Clear loop</button>` : '';
+      const cl = document.getElementById('clear-loop'); if (cl) cl.onclick = () => { S.custom.fill(null); renderLanes(); };
+    }
+
+    function paintHead(step) {
+      document.querySelectorAll('.lane').forEach(l => {
+        const cells = l.children;
+        for (let i = 0; i < cells.length; i++) cells[i].classList.toggle('head', cells.length === 16 && i === step);
+      });
+      document.querySelectorAll('.beats i').forEach((d, i) => d.classList.toggle('on', S.playing && i === step >> 2));
+    }
+
+    function setStyle(id) {
+      S.style = id; const st = STYLES[id];
+      document.documentElement.style.setProperty('--accent', st.color);
+      document.documentElement.style.setProperty('--accent-soft', st.soft);
+      document.querySelectorAll('.style').forEach(b => b.classList.toggle('on', b.dataset.id === id));
+      document.getElementById('bpm').textContent = st.bpm;
+      if (id === 'custom') { S.on.piano = true; syncTracks(); }
+      renderLanes();
+      if (S.playing) { stop(); start(); }
+    }
+
+    function syncTracks() { document.querySelectorAll('.track').forEach(r => r.classList.toggle('on', S.on[r.dataset.id])); }
+    function toggle(id) {
+      S.on[id] = !S.on[id]; syncTracks();
+      const r = document.querySelector(`.track[data-id="${id}"]`); r.classList.add('flash'); setTimeout(() => r.classList.remove('flash'), 180);
+      if (!S.playing) start();
+    }
+
+    /* ---------- Audio ---------- */
+    let AC, master;
+    function initAudio() {
+      AC = new (window.AudioContext || window.webkitAudioContext)();
+      const comp = AC.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4;
+      master = AC.createGain(); master.gain.value = .9; master.connect(comp); comp.connect(AC.destination);
+    }
+    const env = (g, t, peak, a, d) => { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d); };
+    function kick(t) { const o = AC.createOscillator(), g = AC.createGain(); o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(40, t + .12); env(g, t, .9, .003, .22); o.connect(g); g.connect(master); o.start(t); o.stop(t + .3); }
+    let noiseBuf;
+    function noise() { if (!noiseBuf) { noiseBuf = AC.createBuffer(1, AC.sampleRate * .3, AC.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; } const n = AC.createBufferSource(); n.buffer = noiseBuf; return n; }
+    function snare(t) { const n = noise(), f = AC.createBiquadFilter(), g = AC.createGain(); f.type = 'bandpass'; f.frequency.value = 1800; env(g, t, .35, .002, .16); n.connect(f); f.connect(g); g.connect(master); n.start(t); n.stop(t + .2); const o = AC.createOscillator(), g2 = AC.createGain(); o.frequency.value = 190; env(g2, t, .2, .002, .08); o.connect(g2); g2.connect(master); o.start(t); o.stop(t + .12); }
+    function hat(t) { const n = noise(), f = AC.createBiquadFilter(), g = AC.createGain(); f.type = 'highpass'; f.frequency.value = 7000; env(g, t, .12, .001, .04); n.connect(f); f.connect(g); g.connect(master); n.start(t); n.stop(t + .06); }
+    function bass(t, fr) { const o = AC.createOscillator(), f = AC.createBiquadFilter(), g = AC.createGain(); o.type = 'sawtooth'; o.frequency.value = fr; f.type = 'lowpass'; f.frequency.setValueAtTime(900, t); f.frequency.exponentialRampToValueAtTime(200, t + .2); env(g, t, .32, .005, .22); o.connect(f); f.connect(g); g.connect(master); o.start(t); o.stop(t + .3); }
+    function piano(t, fr, v = .3) { const g = AC.createGain(), f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(5000, t); f.frequency.exponentialRampToValueAtTime(1200, t + .6); env(g, t, v, .006, .9); [[1, 'triangle', 1], [2, 'sine', .3], [3, 'sine', .1]].forEach(([m, ty, vv]) => { const o = AC.createOscillator(), gg = AC.createGain(); o.type = ty; o.frequency.value = fr * m; gg.gain.value = vv; o.connect(gg); gg.connect(f); o.start(t); o.stop(t + 1); }); f.connect(g); g.connect(master); }
+    function strings(t, root, len) { [2, 2.52, 3, 4].forEach((m, i) => { [-4, 4].forEach(det => { const o = AC.createOscillator(), f = AC.createBiquadFilter(), g = AC.createGain(); o.type = 'sawtooth'; o.frequency.value = root * m; o.detune.value = det; f.type = 'lowpass'; f.frequency.value = 1600; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(.035, t + .35); g.gain.setValueAtTime(.035, t + len - .3); g.gain.linearRampToValueAtTime(0.0001, t + len); o.connect(f); f.connect(g); g.connect(master); o.start(t); o.stop(t + len + .05); }); }); }
+
+    /* ---------- Sequencer (look-ahead scheduler) ---------- */
+    let nextTime = 0, timerId = null; const queue = [];
+    function stepDur() { return 60 / STYLES[S.style].bpm / 4; }
+    function schedule(step, t) {
+      const st = STYLES[S.style];
+      if (S.on.drums) { if (step % 4 === 0) kick(t); if (step % 8 === 4) snare(t); if (step % 2) hat(t); }
+      if (S.on.bass && step % 2 === 0) bass(t, st.bass[step >> 2]);
+      if (S.on.piano) {
+        const f = S.style === 'custom' ? S.custom[step] : (step % 2 === 0 ? st.melody[(step >> 1) % st.melody.length] : null);
+        if (f) piano(t, f, .22);
+      }
+      if (S.on.strings && step === 0) strings(t, st.bass[0], stepDur() * 16);
+      queue.push({ step, t });
+    }
+    function tick() {
+      while (nextTime < AC.currentTime + .12) { schedule(S.step, nextTime); nextTime += stepDur(); S.step = (S.step + 1) % 16; }
+    }
+    function draw() {
+      if (!S.playing) return;
+      while (queue.length && queue[0].t <= AC.currentTime) { const q = queue.shift(); paintHead(q.step); currentStep = q.step; }
+      requestAnimationFrame(draw);
+    }
+    let currentStep = 0;
+    function start() { if (S.playing) return; S.playing = true; S.step = 0; queue.length = 0; nextTime = AC.currentTime + .05; timerId = setInterval(tick, 25); tick(); draw(); updatePlayBtn(); }
+    function stop() { S.playing = false; clearInterval(timerId); queue.length = 0; paintHead(-1); updatePlayBtn(); }
+    function updatePlayBtn() {
+      document.getElementById('play').innerHTML = S.playing
+        ? '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>'
+        : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>';
+    }
+
+    function solo(i, fromMidi) {
+      if (!AC) return;
+      const f = SOLO[i][1];
+      if (!(fromMidi && CasioMIDI.silent())) piano(AC.currentTime, f, .4);
+      const k = keysEl.querySelector(`.wk[data-i="${i}"]`); k.classList.add('on'); setTimeout(() => k.classList.remove('on'), 140);
+      if (S.style === 'custom' && S.playing) { S.custom[currentStep] = f; S.on.piano = true; syncTracks(); renderLanes(); }
+    }
+
+    /* ---------- Input ---------- */
+    document.getElementById('play').onclick = () => { if (!AC) return; S.playing ? stop() : start(); };
+    addEventListener('keydown', e => {
+      if (e.repeat || !AC) return;
+      const k = e.key.toLowerCase();
+      const t = TRACKS.find(t => t.key === k); if (t) return toggle(t.id);
+      const n = '12345678'.indexOf(k); if (n >= 0 && k !== '') return solo(n);
+      if (e.code === 'Space') { e.preventDefault(); S.playing ? stop() : start(); }
+    });
+    document.getElementById('start').onclick = () => {
+      initAudio(); AC.resume();
+      document.getElementById('intro').style.display = 'none';
+      start();
+    };
+
+    // CASIO keyboard: C3 D3 E3 F3 → instruments on/off, white keys from G3 up → melody (C4…C5 = keys 1…8)
+    const TRACK_NOTES = { 48: 'drums', 50: 'bass', 52: 'piano', 53: 'strings' };
+    const WHITE_IDX = { 0: 0, 2: 1, 4: 2, 5: 3, 7: 4, 9: 5, 11: 6 };
+    CasioMIDI.onNote(note => {
+      if (!AC) return;                               // studio not started yet (browser needs one click for sound)
+      if (TRACK_NOTES[note]) return toggle(TRACK_NOTES[note]);
+      if (note < 55) return;
+      if (note % 12 === 0 && note > 60) return solo(7, true);
+      const i = WHITE_IDX[note % 12]; if (i !== undefined) solo(i, true);
+    });
+
+    setStyle('bollywood'); syncTracks(); updatePlayBtn();
+  </script>
+</body>
+</html>

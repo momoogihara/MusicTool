@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>30 SEC PIANIST — CASIO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=Noto+Music&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #FFFFFF;
+      --surface: #F5F5F7;
+      --ink: #111116;
+      --muted: #8A8A96;
+      --line: #E6E6EB;
+      --accent: #2546FF;
+      --accent-soft: #E9EDFF;
+      --good: #12A150;
+      --warn: #F08C00;
+      --bad: #E5383B;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Inter', 'Helvetica Neue', 'Segoe UI', system-ui, sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    .app {
+      height: 100vh;
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 28px 32px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* ---------- Top bar ---------- */
+    .topbar { display: flex; align-items: flex-end; justify-content: space-between; }
+    .brand { display: flex; flex-direction: column; gap: 6px; }
+    .eyebrow { font-size: .72rem; font-weight: 600; letter-spacing: .22em; color: var(--muted); }
+    .brand h1 { font-size: 2rem; font-weight: 800; letter-spacing: -.02em; line-height: 1; }
+    .brand h1 span { color: var(--accent); }
+    .stats { display: flex; gap: 28px; align-items: flex-end; }
+    .stat { text-align: right; }
+    .stat .label { font-size: .68rem; font-weight: 600; letter-spacing: .18em; color: var(--muted); }
+    .stat .value { font-size: 1.4rem; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 4px; }
+    .stat.timer .value { font-size: 2.6rem; font-weight: 800; letter-spacing: -.03em; line-height: 1; }
+    .stat.timer.low .value { color: var(--bad); }
+
+    .progress { height: 4px; background: var(--line); border-radius: 4px; overflow: hidden; }
+    .progress > div { height: 100%; width: 100%; background: var(--ink); transform-origin: left; transition: transform .1s linear; }
+    .stat.timer.low ~ * .progress > div, .progress.low > div { background: var(--bad); }
+
+    /* ---------- Score ---------- */
+    .score-card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px 18px 6px;
+      background: #fff;
+    }
+    .score-head { display: flex; justify-content: space-between; align-items: center; padding: 0 4px 2px; }
+    .score-head .title { font-size: .78rem; font-weight: 600; letter-spacing: .14em; color: var(--muted); }
+    .legend { display: flex; gap: 14px; font-size: .74rem; color: var(--muted); }
+    .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+    #score svg { width: 100%; height: auto; display: block; }
+    .clef { font-family: 'Noto Music', 'Bravura', 'Apple Symbols', 'Segoe UI Symbol', serif; }
+    .note { transition: fill .15s, stroke .15s; }
+    .note-halo { transition: opacity .2s; }
+
+    /* ---------- Keyboard ---------- */
+    .keys-area { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 34px; min-height: 0; }
+    .hint { font-size: .8rem; color: var(--muted); }
+    .hint kbd {
+      font-family: inherit; font-size: .72rem; font-weight: 600;
+      border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px;
+      padding: 1px 6px; color: var(--ink); background: #fff;
+    }
+    .piano {
+      position: relative;
+      display: flex;
+      padding: 10px 10px 0;
+      background: var(--ink);
+      border-radius: 16px 16px 6px 6px;
+      box-shadow: 0 24px 40px -24px rgba(17,17,22,.45);
+    }
+    .white {
+      position: relative;
+      width: 92px; height: 230px;
+      margin: 0 2px;
+      background: linear-gradient(#fff 0%, #fff 86%, #F1F1F4 100%);
+      border-radius: 0 0 10px 10px;
+      cursor: pointer;
+      display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+      padding-bottom: 14px; gap: 6px;
+      user-select: none;
+      transition: transform .06s ease, background .12s ease;
+      box-shadow: inset 0 -6px 0 #E3E3E8;
+    }
+    .white .nm { font-weight: 700; font-size: 1.15rem; color: #B5B5C0; transition: color .12s; }
+    .white .sc { font-size: .68rem; font-weight: 600; color: #C4C4CC; }
+    .white.next { background: linear-gradient(#fff 0%, var(--accent-soft) 45%, #CBD4FF 100%); box-shadow: inset 0 -6px 0 var(--accent); }
+    .white.next .nm { color: var(--accent); }
+    .white.next::before {
+      content: ''; position: absolute; top: -26px; left: 50%; width: 10px; height: 10px;
+      transform: translateX(-50%) rotate(45deg); background: var(--accent); border-radius: 2px;
+      animation: bob .9s ease-in-out infinite;
+    }
+    .white.down { transform: translateY(3px); box-shadow: inset 0 -2px 0 #E3E3E8; }
+    .white.ok { background: linear-gradient(#fff, #DDF6E8); }
+    .white.miss { animation: shake .25s; background: linear-gradient(#fff, #FFE1E1); }
+    .black {
+      position: absolute; top: 10px;
+      width: 54px; height: 140px;
+      background: linear-gradient(#2A2A33, #17171D);
+      border-radius: 0 0 7px 7px;
+      box-shadow: inset 0 -5px 0 #000, 0 3px 6px rgba(0,0,0,.35);
+      z-index: 2; pointer-events: none;
+    }
+    @keyframes bob { 0%,100% { transform: translate(-50%, 0) rotate(45deg); } 50% { transform: translate(-50%, -5px) rotate(45deg); } }
+    @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+
+    /* ---------- Overlays ---------- */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(255,255,255,.82);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 50;
+    }
+    .card {
+      width: min(520px, 90vw);
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 44px 44px 40px;
+      text-align: center;
+      box-shadow: 0 40px 80px -40px rgba(17,17,22,.35);
+    }
+    .card .eyebrow { margin-bottom: 14px; }
+    .card h2 { font-size: 2.3rem; font-weight: 800; letter-spacing: -.03em; line-height: 1.08; }
+    .card p { color: var(--muted); margin-top: 14px; line-height: 1.55; }
+    .steps { display: flex; justify-content: center; gap: 26px; margin-top: 26px; }
+    .steps div { font-size: .78rem; color: var(--muted); max-width: 110px; }
+    .steps b { display: block; font-size: 1.3rem; color: var(--ink); margin-bottom: 4px; }
+    .btn {
+      margin-top: 30px;
+      padding: 16px 40px;
+      font: inherit; font-size: 1rem; font-weight: 600; letter-spacing: .04em;
+      color: #fff; background: var(--ink);
+      border: none; border-radius: 999px; cursor: pointer;
+      transition: transform .15s ease, background .15s ease;
+    }
+    .btn:hover { transform: translateY(-2px); background: var(--accent); }
+    #count-num { font-size: 9rem; font-weight: 800; letter-spacing: -.05em; color: var(--ink); }
+    .result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 26px; }
+    .result-grid div { background: var(--surface); border-radius: 14px; padding: 14px 6px; }
+    .result-grid .label { font-size: .64rem; font-weight: 600; letter-spacing: .16em; color: var(--muted); }
+    .result-grid .value { font-size: 1.5rem; font-weight: 800; margin-top: 6px; font-variant-numeric: tabular-nums; }
+    .hidden { display: none !important; }
+
+    @media (max-height: 760px) {
+      .white { height: 180px; } .black { height: 110px; }
+      .app { gap: 14px; padding-top: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">
+        <div class="eyebrow">CASIO · PIANO CHALLENGE</div>
+        <h1>30 SEC <span>PIANIST</span></h1>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="label">NOTES</div><div class="value" id="stat-notes">0 / 25</div></div>
+        <div class="stat"><div class="label">MISSES</div><div class="value" id="stat-miss">0</div></div>
+        <div class="stat timer" id="timer-box"><div class="label">TIME LEFT</div><div class="value" id="timer">30.0</div></div>
+      </div>
+    </div>
+    <div class="progress" id="progress"><div id="progress-bar"></div></div>
+
+    <div class="score-card">
+      <div class="score-head">
+        <div class="title">JINGLE BELLS · 8 BARS · 4/4</div>
+        <div class="legend">
+          <span><i style="background:var(--accent)"></i>Now</span>
+          <span><i style="background:var(--good)"></i>Clean</span>
+          <span><i style="background:var(--warn)"></i>After a miss</span>
+        </div>
+      </div>
+      <div id="score"></div>
+    </div>
+
+    <div class="keys-area">
+      <div class="hint">Play on your <b>CASIO keyboard</b> — or click the keys / use <kbd>1</kbd>–<kbd>7</kbd> · <kbd>A</kbd>–<kbd>J</kbd></div>
+      <div class="piano" id="piano"></div>
+    </div>
+  </div>
+
+  <!-- Start -->
+  <div class="overlay" id="start-screen">
+    <div class="card">
+      <div class="eyebrow">CASIO · 30 SEC PIANIST</div>
+      <h2>Can you play a song<br>in 30 seconds?</h2>
+      <p>Read the score, follow the highlighted key, and finish all 8 bars before time runs out.</p>
+      <div class="steps">
+        <div><b>01</b>Watch the blue note on the score</div>
+        <div><b>02</b>Press the key marked below</div>
+        <div><b>03</b>Beat the clock</div>
+      </div>
+      <button class="btn" id="start-btn">Start challenge</button>
+      <p style="font-size:.82rem;margin-top:12px">CASIO keyboard connected? Just press any key to start.</p>
+    </div>
+  </div>
+
+  <!-- Countdown -->
+  <div class="overlay hidden" id="count-screen"><div id="count-num">3</div></div>
+
+  <!-- Result -->
+  <div class="overlay hidden" id="result-screen">
+    <div class="card">
+      <div class="eyebrow" id="result-eyebrow">RESULT</div>
+      <h2 id="result-title">Song complete!</h2>
+      <p id="result-sub">You just played a whole song.</p>
+      <div class="result-grid">
+        <div><div class="label">TIME</div><div class="value" id="r-time">–</div></div>
+        <div><div class="label">ACCURACY</div><div class="value" id="r-acc">–</div></div>
+        <div><div class="label">PROGRESS</div><div class="value" id="r-prog">–</div></div>
+      </div>
+      <button class="btn" id="retry-btn">Try again</button>
+      <p style="font-size:.82rem;margin-top:12px">Or press any key on your CASIO keyboard.</p>
+    </div>
+  </div>
+
+  <script>
+    /* ===== Shared: CASIO keyboard (USB-MIDI) input ===== */
+    const CasioMIDI = {
+      connected: false, muted: true, held: new Map(), _on: [], _off: [], badge: null,
+      onNote(fn) { this._on.push(fn); }, onRelease(fn) { this._off.push(fn); },
+      // true = the page should NOT play its own sound (the keyboard speaker plays it)
+      silent() { return this.connected && this.muted; },
+      init() {
+        this._badge();
+        if (!navigator.requestMIDIAccess) return;
+        navigator.requestMIDIAccess().then(access => {
+          const refresh = () => {
+            const ins = [...access.inputs.values()];
+            ins.forEach(inp => inp.onmidimessage = e => this._msg(e.data));
+            this.connected = ins.length > 0;
+            this.name = ins[0] ? (ins[0].name || 'Keyboard') : '';
+            this._render();
+          };
+          access.onstatechange = refresh; refresh();
+        }).catch(() => {});
+      },
+      _msg([st, note, vel]) {
+        const cmd = st & 0xf0;
+        if (cmd === 0x90 && vel > 0) { this.held.set(note, vel); this._on.forEach(f => f(note, vel / 127)); }
+        else if (cmd === 0x80 || (cmd === 0x90 && vel === 0)) { this.held.delete(note); this._off.forEach(f => f(note)); }
+      },
+      _badge() {
+        const b = document.createElement('button');
+        b.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:60;display:none;align-items:center;gap:8px;' +
+          'font:600 12px Inter,"Helvetica Neue",sans-serif;color:#111116;background:#fff;border:1px solid #E6E6EB;border-radius:999px;' +
+          'padding:7px 14px;cursor:pointer;box-shadow:0 6px 18px -10px rgba(0,0,0,.3)';
+        b.title = 'Click to switch the PC sound on/off';
+        b.onclick = () => { this.muted = !this.muted; this._render(); };
+        document.body.appendChild(b); this.badge = b;
+      },
+      _render() {
+        if (!this.badge) return;
+        this.badge.style.display = this.connected ? 'flex' : 'none';
+        this.badge.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:#2FBF71"></span>CASIO keyboard connected` +
+          `<span style="color:#8A8A96;font-weight:500">· PC sound ${this.muted ? 'off' : 'on'}</span>`;
+      }
+    };
+    CasioMIDI.init();
+
+    /* ---------- Song data (dur: 1 = quarter, 2 = half, 4 = whole) ---------- */
+    const SONG = [
+      ['E',1],['E',1],['E',2],   ['E',1],['E',1],['E',2],
+      ['E',1],['G',1],['C',1],['D',1],   ['E',4],
+      ['F',1],['F',1],['F',1],['F',1],   ['F',1],['E',1],['E',1],['E',1],
+      ['E',1],['D',1],['D',1],['E',1],   ['D',2],['G',2]
+    ].map(([note, dur]) => ({ note, dur }));
+
+    const NOTES = ['C','D','E','F','G','A','B'];
+    const FREQ = { C: 261.63, D: 293.66, E: 329.63, F: 349.23, G: 392.00, A: 440.00, B: 493.88 };
+    const SHORTCUT = { '1':'C','2':'D','3':'E','4':'F','5':'G','6':'A','7':'B', a:'C', s:'D', d:'E', f:'F', g:'G', h:'A', j:'B' };
+    const TIME_LIMIT = 30;
+
+    /* ---------- Build piano ---------- */
+    const piano = document.getElementById('piano');
+    NOTES.forEach((n, i) => {
+      const k = document.createElement('div');
+      k.className = 'white'; k.dataset.note = n;
+      k.innerHTML = `<span class="nm">${n}</span><span class="sc">${i + 1}</span>`;
+      k.addEventListener('pointerdown', () => handleInput(n));
+      piano.appendChild(k);
+    });
+    // black keys between C-D, D-E, F-G, G-A, A-B (visual only)
+    const KW = 96; // white width + margins
+    [0, 1, 3, 4, 5].forEach(i => {
+      const b = document.createElement('div');
+      b.className = 'black';
+      b.style.left = `${10 + KW * (i + 1) - 27}px`;
+      piano.appendChild(b);
+    });
+    const keyEl = n => piano.querySelector(`.white[data-note="${n}"]`);
+
+    /* ---------- Score rendering (SVG) ---------- */
+    const SP = 11;                 // staff line spacing
+    const STEP = SP / 2;
+    const SYS_H = 120;
+    const W = 1000;
+    const scoreEl = document.getElementById('score');
+    const noteNodes = [];
+
+    function yFor(note, top) {
+      // bottom line = E4 ; each diatonic step = STEP
+      const idx = NOTES.indexOf(note);           // C=0 ... B=6
+      const bottom = top + SP * 4;
+      return bottom - (idx - 2) * STEP;
+    }
+
+    function buildScore() {
+      // split into bars of 4 beats
+      const bars = []; let cur = [], beats = 0;
+      SONG.forEach((n, i) => { cur.push({ ...n, i }); beats += n.dur; if (beats >= 4) { bars.push(cur); cur = []; beats = 0; } });
+      const systems = [bars.slice(0, 4), bars.slice(4, 8)];
+
+      let svg = `<svg viewBox="0 0 ${W} ${SYS_H * 2}" xmlns="http://www.w3.org/2000/svg">`;
+      systems.forEach((sys, s) => {
+        const top = 34 + s * SYS_H;
+        const x0 = 10, x1 = W - 10;
+        for (let l = 0; l < 5; l++) svg += `<line x1="${x0}" x2="${x1}" y1="${top + l * SP}" y2="${top + l * SP}" stroke="#C9C9D2" stroke-width="1.1"/>`;
+        svg += `<text class="clef" x="${x0 + 4}" y="${top + SP * 3.15}" font-size="${SP * 6.6}" fill="#111116">&#x1D11E;</text>`;
+        if (s === 0) svg += `<text x="${x0 + 50}" y="${top + SP * 1.85}" font-size="${SP * 2.1}" font-weight="800" fill="#111116" font-family="Inter, sans-serif">4</text><text x="${x0 + 50}" y="${top + SP * 3.85}" font-size="${SP * 2.1}" font-weight="800" fill="#111116" font-family="Inter, sans-serif">4</text>`;
+        svg += `<line x1="${x0}" x2="${x0}" y1="${top}" y2="${top + SP * 4}" stroke="#111116" stroke-width="1.4"/>`;
+        const startX = x0 + (s === 0 ? 86 : 64);
+        const barW = (x1 - startX) / 4;
+        sys.forEach((bar, b) => {
+          const bx = startX + b * barW;
+          // bar number
+          svg += `<text x="${bx + 4}" y="${top - 12}" font-size="10" fill="#A0A0AA" font-family="Inter, sans-serif">${s * 4 + b + 1}</text>`;
+          let beat = 0;
+          bar.forEach(n => {
+            const nx = bx + 22 + (beat / 4) * (barW - 30);
+            const ny = yFor(n.note, top);
+            const filled = n.dur === 1;
+            const stem = n.dur < 4;
+            const stemUp = NOTES.indexOf(n.note) < 6; // B and above stems down
+            let g = `<g class="note" id="n-${n.i}" fill="#111116" stroke="#111116">`;
+            g += `<circle class="note-halo" cx="${nx}" cy="${ny}" r="17" fill="#2546FF" stroke="none" opacity="0"/>`;
+            if (n.note === 'C') g += `<line x1="${nx - 11}" x2="${nx + 11}" y1="${ny}" y2="${ny}" stroke-width="1.3"/>`;
+            g += `<ellipse cx="${nx}" cy="${ny}" rx="${SP * .66}" ry="${SP * .46}" transform="rotate(-20 ${nx} ${ny})" ${filled ? '' : 'fill="#fff"'} stroke-width="${filled ? 0 : 2}"/>`;
+            if (stem) g += stemUp
+              ? `<line x1="${nx + SP * .6}" x2="${nx + SP * .6}" y1="${ny - 1}" y2="${ny - SP * 3.4}" stroke-width="1.5"/>`
+              : `<line x1="${nx - SP * .6}" x2="${nx - SP * .6}" y1="${ny + 1}" y2="${ny + SP * 3.4}" stroke-width="1.5"/>`;
+            g += `<text class="nlabel" x="${nx}" y="${top + SP * 4 + 30}" text-anchor="middle" font-size="11" font-weight="600" font-family="Inter, sans-serif" stroke="none" fill="#B8B8C2">${n.note}</text>`;
+            g += `</g>`;
+            svg += g;
+            beat += n.dur;
+          });
+          const ex = bx + barW;
+          const last = s === 1 && b === 3;
+          svg += `<line x1="${ex}" x2="${ex}" y1="${top}" y2="${top + SP * 4}" stroke="#111116" stroke-width="${last ? 1.4 : 1.1}"/>`;
+          if (last) svg += `<rect x="${ex + 3}" y="${top}" width="4" height="${SP * 4}" fill="#111116" transform="translate(-10 0)"/>`;
+        });
+      });
+      svg += `</svg>`;
+      scoreEl.innerHTML = svg;
+      noteNodes.length = 0;
+      SONG.forEach((_, i) => noteNodes.push(document.getElementById(`n-${i}`)));
+    }
+
+    function paintNote(i, color, labelColor, halo = false) {
+      const g = noteNodes[i]; if (!g) return;
+      g.setAttribute('fill', color); g.setAttribute('stroke', color);
+      g.querySelectorAll('ellipse').forEach(e => { if (e.getAttribute('fill') !== '#fff') e.setAttribute('fill', color); e.setAttribute('stroke', color); });
+      g.querySelector('.nlabel').setAttribute('fill', labelColor || '#B8B8C2');
+      g.querySelector('.note-halo').setAttribute('opacity', halo ? '.12' : '0');
+    }
+
+    /* ---------- Audio ---------- */
+    const AC = new (window.AudioContext || window.webkitAudioContext)();
+    const master = AC.createGain(); master.gain.value = .6; master.connect(AC.destination);
+
+    function playNote(note) {
+      const t = AC.currentTime, f = FREQ[note];
+      const out = AC.createGain();
+      const lp = AC.createBiquadFilter(); lp.type = 'lowpass';
+      lp.frequency.setValueAtTime(4200, t); lp.frequency.exponentialRampToValueAtTime(900, t + 1.2);
+      out.gain.setValueAtTime(0.0001, t);
+      out.gain.exponentialRampToValueAtTime(0.35, t + 0.008);
+      out.gain.exponentialRampToValueAtTime(0.12, t + 0.25);
+      out.gain.exponentialRampToValueAtTime(0.0001, t + 1.6);
+      [[1, 'triangle', 1], [2, 'sine', .35], [3, 'sine', .12]].forEach(([m, type, v]) => {
+        const o = AC.createOscillator(), g = AC.createGain();
+        o.type = type; o.frequency.value = f * m; g.gain.value = v;
+        o.connect(g); g.connect(lp); o.start(t); o.stop(t + 1.7);
+      });
+      lp.connect(out); out.connect(master);
+    }
+    function playMiss() {
+      const t = AC.currentTime, o = AC.createOscillator(), g = AC.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(180, t); o.frequency.exponentialRampToValueAtTime(90, t + .18);
+      g.gain.setValueAtTime(.18, t); g.gain.exponentialRampToValueAtTime(.001, t + .2);
+      o.connect(g); g.connect(master); o.start(t); o.stop(t + .22);
+    }
+
+    /* ---------- Game state ---------- */
+    let step = 0, timeLeft = TIME_LIMIT, timer = null, playing = false;
+    let misses = 0, missedThisNote = false;
+    const timerEl = document.getElementById('timer'), timerBox = document.getElementById('timer-box');
+    const bar = document.getElementById('progress-bar'), progress = document.getElementById('progress');
+
+    function updateHUD() {
+      document.getElementById('stat-notes').textContent = `${step} / ${SONG.length}`;
+      document.getElementById('stat-miss').textContent = misses;
+      timerEl.textContent = Math.max(0, timeLeft).toFixed(1);
+      bar.style.transform = `scaleX(${Math.max(0, timeLeft) / TIME_LIMIT})`;
+      const low = timeLeft <= 8;
+      timerBox.classList.toggle('low', low); progress.classList.toggle('low', low);
+    }
+
+    function showTarget() {
+      piano.querySelectorAll('.white').forEach(k => k.classList.remove('next'));
+      if (step < SONG.length) {
+        keyEl(SONG[step].note).classList.add('next');
+        paintNote(step, '#2546FF', '#2546FF', true);
+      }
+    }
+
+    function handleInput(note, fromMidi) {
+      const k = keyEl(note);   // null for black keys (C#, D# …)
+      if (k) { k.classList.add('down'); setTimeout(() => k.classList.remove('down'), 110); }
+      const quiet = fromMidi && CasioMIDI.silent();
+      if (!quiet && AC.state !== 'running') AC.resume();
+      if (!playing) { if (!quiet && FREQ[note]) playNote(note); return; }
+
+      const target = SONG[step];
+      if (note === target.note) {
+        if (!quiet) playNote(note);
+        paintNote(step, missedThisNote ? '#F08C00' : '#12A150', missedThisNote ? '#F08C00' : '#12A150');
+        k.classList.add('ok'); setTimeout(() => k.classList.remove('ok'), 180);
+        step++; missedThisNote = false;
+        updateHUD();
+        if (step >= SONG.length) endGame(true); else showTarget();
+      } else {
+        if (!quiet) playMiss();
+        misses++; missedThisNote = true;
+        if (k) { k.classList.remove('miss'); void k.offsetWidth; k.classList.add('miss'); setTimeout(() => k.classList.remove('miss'), 260); }
+        updateHUD();
+      }
+    }
+
+    function reset() {
+      step = 0; misses = 0; missedThisNote = false; timeLeft = TIME_LIMIT;
+      buildScore(); updateHUD();
+      piano.querySelectorAll('.white').forEach(k => k.classList.remove('next'));
+    }
+
+    let counting = false, resultAt = 0;
+    function countdown() {
+      if (counting) return; counting = true;
+      document.getElementById('start-screen').classList.add('hidden');
+      document.getElementById('result-screen').classList.add('hidden');
+      const cs = document.getElementById('count-screen'), num = document.getElementById('count-num');
+      reset(); cs.classList.remove('hidden');
+      let c = 3; num.textContent = c;
+      const iv = setInterval(() => {
+        c--;
+        if (c > 0) num.textContent = c;
+        else if (c === 0) num.textContent = 'Go';
+        else { clearInterval(iv); cs.classList.add('hidden'); counting = false; startGame(); }
+      }, 650);
+    }
+
+    function startGame() {
+      playing = true; showTarget();
+      const t0 = performance.now();
+      timer = setInterval(() => {
+        timeLeft = TIME_LIMIT - (performance.now() - t0) / 1000;
+        updateHUD();
+        if (timeLeft <= 0) endGame(false);
+      }, 50);
+    }
+
+    function endGame(success) {
+      playing = false; clearInterval(timer);
+      piano.querySelectorAll('.white').forEach(k => k.classList.remove('next'));
+      const used = Math.min(TIME_LIMIT, TIME_LIMIT - timeLeft);
+      const acc = step + misses ? Math.round(step / (step + misses) * 100) : 0;
+      document.getElementById('result-eyebrow').textContent = success ? 'SONG COMPLETE' : 'TIME OVER';
+      document.getElementById('result-title').textContent = success ? (misses === 0 ? 'Perfect performance!' : 'You played a song!') : 'So close!';
+      document.getElementById('result-sub').textContent = success ? 'Every note on the score is yours now.' : 'You know the melody now — one more try.';
+      document.getElementById('r-time').textContent = success ? `${used.toFixed(1)}s` : '30.0s';
+      document.getElementById('r-acc').textContent = `${acc}%`;
+      document.getElementById('r-prog').textContent = `${Math.round(step / SONG.length * 100)}%`;
+      setTimeout(() => { document.getElementById('result-screen').classList.remove('hidden'); resultAt = performance.now(); }, 350);
+    }
+
+    window.addEventListener('keydown', e => {
+      if (e.repeat) return;
+      const n = SHORTCUT[e.key.toLowerCase()];
+      if (n) handleInput(n);
+    });
+    document.getElementById('start-btn').addEventListener('click', () => { AC.resume(); countdown(); });
+    document.getElementById('retry-btn').addEventListener('click', countdown);
+
+    // CASIO keyboard: any key starts / restarts, then play the score
+    const PC_NAME = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+    CasioMIDI.onNote(m => {
+      const startOpen = !document.getElementById('start-screen').classList.contains('hidden');
+      const resultOpen = !document.getElementById('result-screen').classList.contains('hidden');
+      if (startOpen) return countdown();
+      if (resultOpen) { if (performance.now() - resultAt > 1500) countdown(); return; }
+      if (counting) return;
+      handleInput(PC_NAME[m % 12], true);
+    });
+
+    reset();
+  </script>
+</body>
+</html>

@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sing to Score — CASIO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Fredoka:wght@500;600;700&family=Noto+Music&display=swap" rel="stylesheet">
+  <style>
+    :root { --ink: #1C1C24; --muted: #8C8C98; --line: #ECECF1; --surface: #F6F6F9; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #fff; color: var(--ink);
+      font-family: 'Inter', 'Helvetica Neue', 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    .fun { font-family: 'Fredoka', 'Arial Rounded MT Bold', 'Inter', sans-serif; }
+    canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+    .hud { position: absolute; top: 22px; left: 24px; right: 24px; display: flex; justify-content: space-between; align-items: center; z-index: 5; }
+    .left { display: flex; align-items: center; gap: 16px; }
+    .brand { font-size: .72rem; font-weight: 600; letter-spacing: .22em; color: var(--muted); }
+    .brand b { color: var(--ink); }
+    .mic { display: none; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; font-size: .76rem; font-weight: 600; }
+    .mic .dot { width: 8px; height: 8px; border-radius: 50%; background: #2FBF71; animation: pulse 1.6s infinite; }
+    .mic .meter { width: 80px; height: 6px; border-radius: 6px; background: var(--line); overflow: hidden; }
+    .mic .meter div { height: 100%; width: 0; background: var(--ink); border-radius: 6px; }
+    .mic .hz { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 50px; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(47,191,113,.5); } 70% { box-shadow: 0 0 0 8px rgba(47,191,113,0); } 100% { box-shadow: 0 0 0 0 rgba(47,191,113,0); } }
+
+    .tools { display: flex; gap: 8px; align-items: center; }
+    .seg { display: flex; background: var(--surface); border-radius: 999px; padding: 4px; }
+    .seg button { font: 600 .8rem 'Inter', sans-serif; border: 0; background: none; padding: 7px 14px; border-radius: 999px; color: var(--muted); cursor: pointer; }
+    .seg button.on { background: #fff; color: var(--ink); box-shadow: 0 2px 6px rgba(0,0,0,.08); }
+    .tbtn { font: 600 .8rem 'Inter', sans-serif; border: 1px solid var(--line); background: #fff; padding: 8px 16px; border-radius: 999px; cursor: pointer; color: var(--ink); transition: background .15s; }
+    .tbtn:hover { background: var(--surface); }
+    .tbtn.primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+    .tbtn.primary:hover { background: #2FA4E7; border-color: #2FA4E7; }
+
+    #intro { position: absolute; inset: 0; z-index: 20; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; }
+    #intro .eyebrow { font-size: .74rem; font-weight: 600; letter-spacing: .24em; color: var(--muted); }
+    #intro h1 { font-size: clamp(2.4rem, 5vw, 3.6rem); font-weight: 700; margin-top: 10px; line-height: 1.05; }
+    #intro p { color: var(--muted); margin-top: 14px; font-size: 1.05rem; line-height: 1.6; }
+    .mini-staff { margin-bottom: 28px; }
+    .btn { margin-top: 30px; font: 600 1.05rem 'Fredoka', 'Inter', sans-serif; color: #fff; background: var(--ink); border: 0; border-radius: 999px; padding: 16px 40px; cursor: pointer; transition: transform .15s, background .2s; }
+    .btn:hover { transform: translateY(-2px); background: #2FA4E7; }
+    .ghost { margin-top: 12px; font: 600 .9rem 'Inter', sans-serif; color: var(--muted); background: none; border: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+    #error { margin-top: 16px; color: #E5383B; font-size: .9rem; display: none; }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+
+  <div class="hud">
+    <div class="left">
+      <div class="brand">CASIO · <b>SING TO SCORE</b></div>
+      <div class="mic" id="mic"><span class="dot"></span>MIC<div class="meter"><div id="meter"></div></div><span class="hz" id="hz">-- Hz</span></div>
+    </div>
+    <div class="tools">
+      <div class="seg" id="mode">
+        <button data-mode="animal" class="on">Animal notes</button>
+        <button data-mode="note">Real notes</button>
+      </div>
+      <button class="tbtn primary" id="play">▶ Play back</button>
+      <button class="tbtn" id="clear">Clear</button>
+    </div>
+  </div>
+
+  <div id="intro">
+    <svg class="mini-staff" width="260" height="90" viewBox="0 0 260 90" id="mini"></svg>
+    <div class="eyebrow">CASIO · SING TO SCORE</div>
+    <h1 class="fun">Your voice becomes<br>sheet music</h1>
+    <p>Sing or play a melody on your CASIO keyboard — each note lands on the staff.<br>Then press <b>Play back</b> to hear your song.</p>
+    <button class="btn" id="start">Start singing</button>
+    <button class="ghost" id="nomic">Play with keys only</button>
+    <div id="error"></div>
+  </div>
+
+  <script>
+    /* ===== Hand-drawn style animal illustrations (SVG, viewBox 0 0 100 100) ===== */
+    const INK = '#2B2B33';
+    const _eye = (x, y, s = 1) => `<ellipse cx="${x}" cy="${y}" rx="${3.6*s}" ry="${4.4*s}" fill="${INK}"/><circle cx="${x+1.3*s}" cy="${y-1.7*s}" r="${1.4*s}" fill="#fff"/>`;
+    const _cheek = (x, y, c = '#FF8FA3') => `<ellipse cx="${x}" cy="${y}" rx="5.2" ry="3.2" fill="${c}" opacity=".55"/>`;
+    const _smile = (x, y, w = 4) => `<path d="M${x-w} ${y} q${w/2} ${w*0.75} ${w} 0 q${w/2} ${w*0.75} ${w} 0" fill="none" stroke="${INK}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`;
+    const _nose = (x, y, c = INK, w = 7) => `<path d="M${x-w/2} ${y-2} Q${x} ${y-4} ${x+w/2} ${y-2} Q${x+w/2-0.5} ${y+2.5} ${x} ${y+3} Q${x-w/2+0.5} ${y+2.5} ${x-w/2} ${y-2}Z" fill="${c}"/>`;
+
+    const ANIMAL_SVG = {
+      LION: `
+        <g fill="#F29E4C">${Array.from({length:14},(_,i)=>{const a=i/14*Math.PI*2;return `<circle cx="${50+Math.cos(a)*33}" cy="${52+Math.sin(a)*33}" r="13"/>`}).join('')}<circle cx="50" cy="52" r="34"/></g>
+        <circle cx="29" cy="30" r="8" fill="#FFD48A"/><circle cx="29" cy="30" r="4" fill="#F7B267"/>
+        <circle cx="71" cy="30" r="8" fill="#FFD48A"/><circle cx="71" cy="30" r="4" fill="#F7B267"/>
+        <circle cx="50" cy="53" r="27" fill="#FFD48A"/>
+        <ellipse cx="50" cy="64" rx="12" ry="9" fill="#FFF1D6"/>
+        ${_eye(40,50)}${_eye(60,50)}${_cheek(33,60)}${_cheek(67,60)}
+        ${_nose(50,60,'#8A5A44')}${_smile(50,65,3.5)}`,
+      CAT: `
+        <path d="M22 44 L26 14 L46 30 Z" fill="#B9BECB"/><path d="M27 37 L29 21 L39 30 Z" fill="#FFB3C1"/>
+        <path d="M78 44 L74 14 L54 30 Z" fill="#B9BECB"/><path d="M73 37 L71 21 L61 30 Z" fill="#FFB3C1"/>
+        <ellipse cx="50" cy="55" rx="32" ry="28" fill="#C9CEDA"/>
+        <path d="M50 28 L46 38 M43 29 L42 37 M57 29 L58 37" stroke="#A5ABB9" stroke-width="2.4" stroke-linecap="round"/>
+        ${_eye(39,53)}${_eye(61,53)}${_cheek(31,63)}${_cheek(69,63)}
+        <path d="M47 61 L53 61 L50 64.5 Z" fill="#FF8FA3"/>${_smile(50,66,3.2)}
+        <path d="M14 58 L30 60 M14 66 L30 64 M86 58 L70 60 M86 66 L70 64" stroke="${INK}" stroke-width="1.3" stroke-linecap="round" opacity=".6"/>`,
+      RABBIT: `
+        <ellipse cx="37" cy="24" rx="9" ry="22" fill="#F1E6DE" stroke="#E0CFC3" stroke-width="1.5" transform="rotate(-10 37 24)"/>
+        <ellipse cx="37" cy="26" rx="4.5" ry="15" fill="#FFC2CF" transform="rotate(-10 37 26)"/>
+        <ellipse cx="63" cy="24" rx="9" ry="22" fill="#F1E6DE" stroke="#E0CFC3" stroke-width="1.5" transform="rotate(10 63 24)"/>
+        <ellipse cx="63" cy="26" rx="4.5" ry="15" fill="#FFC2CF" transform="rotate(10 63 26)"/>
+        <ellipse cx="50" cy="62" rx="30" ry="27" fill="#F7EEE8" stroke="#E0CFC3" stroke-width="1.5"/>
+        ${_eye(39,59)}${_eye(61,59)}${_cheek(31,68)}${_cheek(69,68)}
+        <ellipse cx="50" cy="67" rx="3.2" ry="2.4" fill="#FF8FA3"/>
+        <path d="M50 69 V72 M46 74 Q50 77 50 72 Q50 77 54 74" fill="none" stroke="${INK}" stroke-width="1.7" stroke-linecap="round"/>`,
+      SQUIRREL: `
+        <path d="M56 90 C98 94 104 46 88 22 C78 8 56 12 62 28 C66 38 82 42 80 58 C78 72 64 76 56 90Z" fill="#D9895A"/>
+        <path d="M70 22 C84 24 92 40 90 56" fill="none" stroke="#EDB48C" stroke-width="5" stroke-linecap="round"/>
+        <path d="M24 30 L28 14 L40 28 Z" fill="#C9744A"/><path d="M62 28 L70 14 L74 30 Z" fill="#C9744A"/>
+        <ellipse cx="48" cy="54" rx="28" ry="27" fill="#C9744A"/>
+        <ellipse cx="48" cy="64" rx="17" ry="14" fill="#F6DCC4"/>
+        ${_eye(38,50)}${_eye(58,50)}${_cheek(30,60)}${_cheek(66,60)}
+        ${_nose(48,58,'#5E3A28',6)}${_smile(48,63,3)}
+        <rect x="45" y="65" width="6" height="5" rx="1.2" fill="#fff" stroke="#E5CDB7" stroke-width=".8"/>`,
+      ELEPHANT: `
+        <ellipse cx="20" cy="50" rx="18" ry="22" fill="#9DB3C8"/><ellipse cx="22" cy="51" rx="11" ry="15" fill="#FFC9D3"/>
+        <ellipse cx="80" cy="50" rx="18" ry="22" fill="#9DB3C8"/><ellipse cx="78" cy="51" rx="11" ry="15" fill="#FFC9D3"/>
+        <ellipse cx="50" cy="48" rx="27" ry="26" fill="#B3C6D8"/>
+        <path d="M43 60 C43 74 44 86 52 90 C58 92 62 88 58 84 C54 82 56 74 57 60 Z" fill="#B3C6D8"/>
+        <path d="M45 72 h10 M46 79 h9" stroke="#9DB3C8" stroke-width="1.8" stroke-linecap="round"/>
+        ${_eye(39,46)}${_eye(61,46)}${_cheek(31,57)}${_cheek(69,57)}`,
+      FOX: `
+        <path d="M18 46 L22 12 L44 32 Z" fill="#F07F3C"/><path d="M24 38 L25 21 L37 32 Z" fill="#3A2C2C"/>
+        <path d="M82 46 L78 12 L56 32 Z" fill="#F07F3C"/><path d="M76 38 L75 21 L63 32 Z" fill="#3A2C2C"/>
+        <path d="M14 46 C14 30 30 26 50 26 C70 26 86 30 86 46 C86 64 66 84 50 86 C34 84 14 64 14 46Z" fill="#F38B47"/>
+        <path d="M14 48 C24 54 38 56 50 72 C62 56 76 54 86 48 C84 66 66 84 50 86 C34 84 16 66 14 48Z" fill="#FFF4EA"/>
+        ${_eye(37,50)}${_eye(63,50)}${_cheek(29,62,'#FF8F80')}${_cheek(71,62,'#FF8F80')}
+        <ellipse cx="50" cy="76" rx="4" ry="3" fill="${INK}"/>${_smile(50,80,3)}`,
+      PANDA: `
+        <circle cx="25" cy="27" r="12" fill="${INK}"/><circle cx="75" cy="27" r="12" fill="${INK}"/>
+        <ellipse cx="50" cy="55" rx="34" ry="31" fill="#FFFFFF" stroke="#E4E4EA" stroke-width="2"/>
+        <ellipse cx="36" cy="52" rx="9" ry="11" fill="${INK}" transform="rotate(25 36 52)"/>
+        <ellipse cx="64" cy="52" rx="9" ry="11" fill="${INK}" transform="rotate(-25 64 52)"/>
+        <circle cx="37" cy="52" r="3.4" fill="#fff"/><circle cx="38" cy="51" r="1.6" fill="${INK}"/>
+        <circle cx="63" cy="52" r="3.4" fill="#fff"/><circle cx="62" cy="51" r="1.6" fill="${INK}"/>
+        ${_cheek(27,66)}${_cheek(73,66)}
+        <ellipse cx="50" cy="65" rx="4.5" ry="3.2" fill="${INK}"/>${_smile(50,70,3)}`,
+      GIRAFFE: `
+        <path d="M38 22 V10 M62 22 V10" stroke="#C98A4B" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="38" cy="9" r="5" fill="#B5743C"/><circle cx="62" cy="9" r="5" fill="#B5743C"/>
+        <ellipse cx="18" cy="34" rx="12" ry="6" fill="#F7C548" transform="rotate(-20 18 34)"/><ellipse cx="18" cy="34" rx="6" ry="3" fill="#FFB3C1" transform="rotate(-20 18 34)"/>
+        <ellipse cx="82" cy="34" rx="12" ry="6" fill="#F7C548" transform="rotate(20 82 34)"/><ellipse cx="82" cy="34" rx="6" ry="3" fill="#FFB3C1" transform="rotate(20 82 34)"/>
+        <path d="M24 44 C24 26 36 18 50 18 C64 18 76 26 76 44 C76 56 72 64 72 70 C72 84 62 92 50 92 C38 92 28 84 28 70 C28 64 24 56 24 44Z" fill="#F9CF5C"/>
+        <circle cx="34" cy="30" r="5" fill="#E2A33E"/><circle cx="66" cy="28" r="4" fill="#E2A33E"/><circle cx="58" cy="22" r="3" fill="#E2A33E"/>
+        <ellipse cx="50" cy="76" rx="20" ry="14" fill="#F3B87A"/>
+        <ellipse cx="43" cy="74" rx="2.2" ry="3" fill="#8A5A44"/><ellipse cx="57" cy="74" rx="2.2" ry="3" fill="#8A5A44"/>
+        ${_eye(38,48)}${_eye(62,48)}${_cheek(31,58)}${_cheek(69,58)}${_smile(50,82,3.5)}`,
+      KOALA: `
+        <circle cx="20" cy="38" r="18" fill="#9EA3AF"/><circle cx="21" cy="40" r="11" fill="#E9E5EE"/>
+        <circle cx="80" cy="38" r="18" fill="#9EA3AF"/><circle cx="79" cy="40" r="11" fill="#E9E5EE"/>
+        <ellipse cx="50" cy="56" rx="30" ry="28" fill="#B1B5C1"/>
+        ${_eye(37,52)}${_eye(63,52)}${_cheek(29,66)}${_cheek(71,66)}
+        <ellipse cx="50" cy="62" rx="7.5" ry="10" fill="${INK}"/><ellipse cx="48" cy="57" rx="2.2" ry="3" fill="#fff" opacity=".6"/>
+        ${_smile(50,76,3)}`,
+      ALLIGATOR: `
+        <circle cx="34" cy="30" r="13" fill="#6DC36F"/><circle cx="66" cy="30" r="13" fill="#6DC36F"/>
+        <circle cx="34" cy="29" r="8" fill="#fff"/><circle cx="66" cy="29" r="8" fill="#fff"/>
+        ${_eye(35,30,1.1)}${_eye(65,30,1.1)}
+        <path d="M14 56 C14 40 30 36 50 36 C70 36 86 40 86 56 C86 72 72 82 50 82 C28 82 14 72 14 56Z" fill="#7BCB7C"/>
+        <path d="M20 64 C34 70 66 70 80 64" fill="none" stroke="#4E9E54" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M30 66 l3 5 l3 -4 M44 68 l3 5 l3 -5 M58 68 l3 5 l3 -5" fill="#fff" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/>
+        <ellipse cx="42" cy="47" rx="2.4" ry="1.8" fill="#3F8A46"/><ellipse cx="58" cy="47" rx="2.4" ry="1.8" fill="#3F8A46"/>
+        <circle cx="28" cy="52" r="1.6" fill="#5DAF62"/><circle cx="72" cy="52" r="1.6" fill="#5DAF62"/><circle cx="24" cy="58" r="1.4" fill="#5DAF62"/><circle cx="76" cy="58" r="1.4" fill="#5DAF62"/>
+        ${_cheek(25,60,'#FF9AA2')}${_cheek(75,60,'#FF9AA2')}`,
+      FLAMINGO: `
+        <path d="M34 94 C26 76 48 72 44 58" fill="none" stroke="#FF92B4" stroke-width="12" stroke-linecap="round"/>
+        <path d="M42 18 C38 10 46 6 48 13" fill="none" stroke="#FF7BA5" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="44" cy="42" r="25" fill="#FFA1C0"/>
+        <path d="M64 33 C78 30 90 38 89 50 L88 58 C86 63 80 61 81 55 C82 48 76 46 66 49 Z" fill="#FFF3E6"/>
+        <path d="M88.4 50 L88 58 C86 63 80 61 81 55 C81.5 52 84 50 88.4 50Z" fill="${INK}"/>
+        ${_eye(36,38)}${_eye(54,38)}${_cheek(30,50,'#FF6B95')}${_cheek(58,50,'#FF6B95')}${_smile(45,50,3)}`,
+      BIRD: `
+        <path d="M48 18 C44 8 52 6 54 14 C56 6 64 10 56 20" fill="#3E9FD6"/>
+        <ellipse cx="50" cy="56" rx="34" ry="32" fill="#63B9E8"/>
+        <ellipse cx="50" cy="68" rx="20" ry="17" fill="#DDF2FC"/>
+        <path d="M16 58 C10 66 16 76 26 74 C24 68 22 62 16 58Z" fill="#3E9FD6"/>
+        <path d="M84 58 C90 66 84 76 74 74 C76 68 78 62 84 58Z" fill="#3E9FD6"/>
+        ${_eye(39,48)}${_eye(61,48)}${_cheek(31,58)}${_cheek(69,58)}
+        <path d="M44 55 L56 55 L50 63 Z" fill="#FFB547" stroke="#F09A2A" stroke-width="1" stroke-linejoin="round"/>`
+    };
+
+    const animalSVG = (name) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${ANIMAL_SVG[name] || ''}</svg>`;
+    const ANIMAL_IMG = {};
+    Object.keys(ANIMAL_SVG).forEach(name => {
+      const img = new Image();
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(animalSVG(name));
+      ANIMAL_IMG[name] = img;
+    });
+
+    /* ===== Shared: microphone + pitch detection ===== */
+    const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+    const PITCH_COLORS = ['#FF5A5F','#FF7F3F','#FFA62B','#F5C02E','#8CCB3A','#2FBF71','#20B8AE','#2FA4E7','#4C74F6','#7B61FF','#B05CEB','#F2569F'];
+    const hexToRgb = h => { const n = parseInt(h.slice(1), 16); return { r: n >> 16 & 255, g: n >> 8 & 255, b: n & 255 }; };
+    const freqToMidi = f => Math.round(12 * Math.log2(f / 440)) + 69;
+    const midiToFreq = m => 440 * Math.pow(2, (m - 69) / 12);
+
+    function autoCorrelate(buf, sampleRate) {
+      let size = buf.length, rms = 0;
+      for (let i = 0; i < size; i++) rms += buf[i] * buf[i];
+      rms = Math.sqrt(rms / size);
+      if (rms < 0.01) return -1;
+      let r1 = 0, r2 = size - 1;
+      const thres = 0.2;
+      for (let i = 0; i < size / 2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
+      for (let i = 1; i < size / 2; i++) if (Math.abs(buf[size - i]) < thres) { r2 = size - i; break; }
+      buf = buf.slice(r1, r2); size = buf.length;
+      const maxLag = Math.min(size, Math.floor(sampleRate / 60));   // ignore below ~60 Hz (faster)
+      const c = new Float32Array(maxLag);
+      for (let i = 0; i < maxLag; i++) { let s = 0; for (let j = 0; j < size - i; j++) s += buf[j] * buf[j + i]; c[i] = s; }
+      let d = 0; while (d < maxLag - 1 && c[d] > c[d + 1]) d++;
+      let maxval = -1, maxpos = -1;
+      for (let i = d; i < maxLag; i++) if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
+      if (maxpos <= 0) return -1;
+      let T0 = maxpos;
+      const x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1] || 0;
+      const a = (x1 + x3 - 2 * x2) / 2, b = (x3 - x1) / 2;
+      if (a) T0 = T0 - b / (2 * a);
+      return sampleRate / T0;
+    }
+
+    const Mic = {
+      ctx: null, analyser: null, buf: null, freq: null, ready: false,
+      async init() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('Please open this page in the latest Google Chrome.');
+        this.ctx = this.ctx || new (window.AudioContext || window.webkitAudioContext)();
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+        const src = this.ctx.createMediaStreamSource(stream);
+        this.analyser = this.ctx.createAnalyser();
+        this.analyser.fftSize = 2048;
+        this.analyser.smoothingTimeConstant = 0.75;
+        this.buf = new Float32Array(this.analyser.fftSize);
+        this.freq = new Uint8Array(this.analyser.frequencyBinCount);
+        src.connect(this.analyser);
+        await this.ctx.resume();
+        this.ready = true;
+      },
+      audioCtx() { this.ctx = this.ctx || new (window.AudioContext || window.webkitAudioContext)(); return this.ctx; },
+      // returns { volume 0..1, pitch Hz or -1 }
+      read(noise = 0.06) {
+        if (!this.ready) return { volume: 0, pitch: -1 };
+        this.analyser.getFloatTimeDomainData(this.buf);
+        this.analyser.getByteFrequencyData(this.freq);
+        let s = 0; for (let i = 0; i < this.buf.length; i++) s += this.buf[i] * this.buf[i];
+        const volume = Math.min(1, Math.sqrt(s / this.buf.length) * 4);
+        let pitch = -1;
+        if (volume > noise) { const p = autoCorrelate(this.buf, this.ctx.sampleRate); if (p > 80 && p < 1100) pitch = p; }
+        return { volume, pitch };
+      }
+    };
+
+    // Median filter + "must hold N frames" so the note does not flicker
+    function createStabilizer(history = 5, holdFrames = 3) {
+      const hist = []; let cand = null, count = 0, stable = null;
+      return {
+        push(pitch) {
+          if (pitch < 0) { hist.length = 0; cand = null; count = 0; stable = null; return null; }
+          hist.push(pitch); if (hist.length > history) hist.shift();
+          const med = [...hist].sort((a, b) => a - b)[hist.length >> 1];
+          const midi = freqToMidi(med);
+          if (midi === cand) count++; else { cand = midi; count = 1; }
+          if (count >= holdFrames) stable = { midi, freq: med };
+          return stable;
+        }
+      };
+    }
+
+    // Soft synth used for chords / notes
+    function playTone(ctx, freqs, { dur = 1.2, vol = 0.09, type = 'triangle', attack = 0.01 } = {}) {
+      const t = ctx.currentTime;
+      const out = ctx.createGain();
+      out.gain.setValueAtTime(0.0001, t);
+      out.gain.exponentialRampToValueAtTime(vol, t + attack);
+      out.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      out.connect(ctx.destination);
+      freqs.forEach(f => {
+        const o = ctx.createOscillator(); o.type = type; o.frequency.value = f;
+        const o2 = ctx.createOscillator(); o2.type = 'sine'; o2.frequency.value = f * 2;
+        const g2 = ctx.createGain(); g2.gain.value = 0.25;
+        o.connect(out); o2.connect(g2); g2.connect(out);
+        o.start(t); o2.start(t); o.stop(t + dur + 0.05); o2.stop(t + dur + 0.05);
+      });
+    }
+
+    // Light 2-octave keyboard (C3–B4) drawn on canvas. Returns key rects for hit testing.
+    function drawLightKeyboard(ctx, x, y, w, h, activeMidi, activeColor) {
+      const whites = [0, 2, 4, 5, 7, 9, 11];
+      const kw = w / 14; const rects = [];
+      for (let o = 0; o < 2; o++) whites.forEach((pc, i) => {
+        const idx = o * 7 + i, midi = 48 + o * 12 + pc, kx = x + idx * kw;
+        const on = activeMidi === midi;
+        ctx.fillStyle = on ? activeColor : '#FFFFFF';
+        ctx.strokeStyle = '#E2E2E8'; ctx.lineWidth = 1;
+        roundRectPath(ctx, kx + 1.5, y, kw - 3, h, [0, 0, 8, 8]); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = on ? '#FFFFFF' : '#B6B6C2';
+        ctx.font = '600 12px Inter, "Helvetica Neue", sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(NOTE_NAMES[pc] + (3 + o), kx + kw / 2, y + h - 14);
+        rects.push({ midi, x: kx, y, w: kw, h, black: false });
+      });
+      const blacks = [[1, 0], [3, 1], [6, 3], [8, 4], [10, 5]];
+      for (let o = 0; o < 2; o++) blacks.forEach(([pc, after]) => {
+        const midi = 48 + o * 12 + pc; const bx = x + (o * 7 + after + 1) * kw - kw * 0.3; const bw = kw * 0.6, bh = h * 0.6;
+        const on = activeMidi === midi;
+        ctx.fillStyle = on ? activeColor : '#1E1E26';
+        roundRectPath(ctx, bx, y, bw, bh, [0, 0, 6, 6]); ctx.fill();
+        rects.push({ midi, x: bx, y, w: bw, h: bh, black: true });
+      });
+      return rects;
+    }
+    function roundRectPath(ctx, x, y, w, h, r) { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); }
+    function hitKey(rects, px, py) {
+      const inR = r => px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h;
+      return (rects.find(r => r.black && inR(r)) || rects.find(r => !r.black && inR(r)) || {}).midi;
+    }
+    const foldMidi = m => { while (m < 48) m += 12; while (m > 71) m -= 12; return m; };
+
+    /* ===== Shared: CASIO keyboard (USB-MIDI) input ===== */
+    const CasioMIDI = {
+      connected: false, muted: true, held: new Map(), _on: [], _off: [], badge: null,
+      onNote(fn) { this._on.push(fn); }, onRelease(fn) { this._off.push(fn); },
+      // true = the page should NOT play its own sound (the keyboard speaker plays it)
+      silent() { return this.connected && this.muted; },
+      init() {
+        this._badge();
+        if (!navigator.requestMIDIAccess) return;
+        navigator.requestMIDIAccess().then(access => {
+          const refresh = () => {
+            const ins = [...access.inputs.values()];
+            ins.forEach(inp => inp.onmidimessage = e => this._msg(e.data));
+            this.connected = ins.length > 0;
+            this.name = ins[0] ? (ins[0].name || 'Keyboard') : '';
+            this._render();
+          };
+          access.onstatechange = refresh; refresh();
+        }).catch(() => {});
+      },
+      _msg([st, note, vel]) {
+        const cmd = st & 0xf0;
+        if (cmd === 0x90 && vel > 0) { this.held.set(note, vel); this._on.forEach(f => f(note, vel / 127)); }
+        else if (cmd === 0x80 || (cmd === 0x90 && vel === 0)) { this.held.delete(note); this._off.forEach(f => f(note)); }
+      },
+      _badge() {
+        const b = document.createElement('button');
+        b.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:60;display:none;align-items:center;gap:8px;' +
+          'font:600 12px Inter,"Helvetica Neue",sans-serif;color:#111116;background:#fff;border:1px solid #E6E6EB;border-radius:999px;' +
+          'padding:7px 14px;cursor:pointer;box-shadow:0 6px 18px -10px rgba(0,0,0,.3)';
+        b.title = 'Click to switch the PC sound on/off';
+        b.onclick = () => { this.muted = !this.muted; this._render(); };
+        document.body.appendChild(b); this.badge = b;
+      },
+      _render() {
+        if (!this.badge) return;
+        this.badge.style.display = this.connected ? 'flex' : 'none';
+        this.badge.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:#2FBF71"></span>CASIO keyboard connected` +
+          `<span style="color:#8A8A96;font-weight:500">· PC sound ${this.muted ? 'off' : 'on'}</span>`;
+      }
+    };
+    CasioMIDI.init();
+
+
+    const ANIMAL_BY_PC = ['LION','CAT','RABBIT','SQUIRREL','ELEPHANT','FOX','PANDA','GIRAFFE','KOALA','ALLIGATOR','FLAMINGO','BIRD'];
+    const STEP_BY_PC = [0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6];       // diatonic position C..B
+    const SHARP = [0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0];
+    const MAX_NOTES = 16;
+
+    const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+    let W = 0, H = 0;
+    function resize() { const d = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * d; cv.height = H * d; ctx.setTransform(d, 0, 0, d, 0, 0); }
+    addEventListener('resize', resize); resize();
+
+    // intro mini staff with a few animal notes
+    (() => {
+      const m = document.getElementById('mini'); let s = '';
+      for (let i = 0; i < 5; i++) s += `<line x1="0" x2="260" y1="${22 + i * 11}" y2="${22 + i * 11}" stroke="#D5D5DD"/>`;
+      [[0, 'LION', 0], [4, 'ELEPHANT', 1], [7, 'GIRAFFE', 2], [4, 'ELEPHANT', 3], [0, 'LION', 4]].forEach(([pc, a, i]) => {
+        const y = 66 - (STEP_BY_PC[pc] - 2) * 5.5 + 0; s += `<image href="${ANIMAL_IMG[a].src}" x="${30 + i * 46 - 16}" y="${y - 16}" width="32" height="32"/>`;
+      });
+      m.innerHTML = s;
+    })();
+
+    let mode = 'animal';
+    const notes = [];               // { midi, t }
+    let activeMidi = -1, lastMidi = -1, lastTime = 0, holdTimer = 0, keyRects = [];
+    const stab = createStabilizer(5, 3);
+    const sparks = [];
+
+    function addNote(midi, fromUser, fromMidi) {
+      midi = foldMidi(midi);
+      activeMidi = midi; holdTimer = 1.2;
+      const now = performance.now();
+      if (!fromUser && (midi === lastMidi || now - lastTime < 260)) return;
+      lastMidi = midi; lastTime = now;
+      notes.push({ midi, t: now });
+      if (notes.length > MAX_NOTES) notes.shift();
+      const pc = midi % 12, r = midiToFreq(60 + pc);
+      if (!(fromMidi && CasioMIDI.silent())) playTone(Mic.audioCtx(), [r, r * 1.2599, r * 1.4983], { dur: 1, vol: .07 });
+      const p = notePos(notes.length - 1, midi);
+      for (let i = 0; i < 14; i++) { const a = Math.random() * 7, s = Math.random() * 3 + 1.5; sparks.push({ x: p.x, y: p.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 1, c: PITCH_COLORS[pc] }); }
+    }
+
+    /* ---------- Layout ---------- */
+    function layout() {
+      const cardW = Math.min(1100, W - 64), cardX = (W - cardW) / 2;
+      const SP = Math.max(16, Math.min(28, H / 25));
+      const top = Math.max(150, H * .27);
+      return { cardX, cardW, SP, top, x0: cardX + 150, x1: cardX + cardW - 40 };
+    }
+    function notePos(i, midi) {
+      const L = layout(), pc = midi % 12;
+      const bottom = L.top + L.SP * 4;
+      const step = STEP_BY_PC[pc];
+      const spacing = (L.x1 - L.x0) / MAX_NOTES;
+      return { x: L.x0 + spacing * (i + .5), y: bottom - (step - 2) * L.SP / 2, L };
+    }
+
+    const spring = t => 1 - Math.exp(-t * 9) * Math.cos(t * 15);
+
+    function drawStaff() {
+      const L = layout(); const { cardX, cardW, SP, top } = L;
+      // card
+      ctx.fillStyle = '#fff'; ctx.strokeStyle = '#ECECF1'; ctx.lineWidth = 1;
+      roundRectPath(ctx, cardX, top - SP * 4.2, cardW, SP * 13, 22); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#A3A3AE'; ctx.font = '600 11px Inter, sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText(`MY MELODY  ·  ${notes.length} / ${MAX_NOTES} NOTES`, cardX + 26, top - SP * 2.6);
+      // lines
+      ctx.strokeStyle = '#CFCFD8'; ctx.lineWidth = 1.2;
+      for (let l = 0; l < 5; l++) { ctx.beginPath(); ctx.moveTo(cardX + 24, top + l * SP); ctx.lineTo(cardX + cardW - 24, top + l * SP); ctx.stroke(); }
+      ctx.strokeStyle = '#1C1C24'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(cardX + 24, top); ctx.lineTo(cardX + 24, top + SP * 4); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cardX + cardW - 24, top); ctx.lineTo(cardX + cardW - 24, top + SP * 4); ctx.stroke();
+      // bar lines every 4 notes
+      const spacing = (L.x1 - L.x0) / MAX_NOTES;
+      ctx.strokeStyle = '#DADAE2'; ctx.lineWidth = 1;
+      for (let b = 1; b < 4; b++) { const x = L.x0 + spacing * b * 4; ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, top + SP * 4); ctx.stroke(); }
+      // clef
+      ctx.fillStyle = '#1C1C24'; ctx.font = `${SP * 5.6}px "Noto Music", "Apple Symbols", "Segoe UI Symbol", serif`; ctx.textAlign = 'left';
+      ctx.fillText('\u{1D11E}', cardX + 40, top + SP * 3.1);
+
+      const now = performance.now();
+      notes.forEach((n, i) => {
+        const p = notePos(i, n.midi), pc = n.midi % 12, color = PITCH_COLORS[pc];
+        const age = (now - n.t) / 1000, s = Math.max(0, spring(age));
+        const isLast = i === notes.length - 1;
+        // ledger line for C
+        if (STEP_BY_PC[pc] === 0) { ctx.strokeStyle = '#1C1C24'; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.moveTo(p.x - SP * 1.1, p.y); ctx.lineTo(p.x + SP * 1.1, p.y); ctx.stroke(); }
+        if (isLast && holdTimer > 0) { ctx.fillStyle = color + '1F'; ctx.beginPath(); ctx.arc(p.x, p.y, SP * 1.9, 0, 7); ctx.fill(); }
+        ctx.save(); ctx.translate(p.x, p.y); ctx.scale(s, s);
+        if (mode === 'animal') {
+          const sz = SP * 2.5; ctx.drawImage(ANIMAL_IMG[ANIMAL_BY_PC[pc]], -sz / 2, -sz / 2, sz, sz);
+        } else {
+          ctx.fillStyle = color; ctx.strokeStyle = color; ctx.lineWidth = 2;
+          ctx.save(); ctx.rotate(-.35); ctx.beginPath(); ctx.ellipse(0, 0, SP * .68, SP * .48, 0, 0, 7); ctx.fill(); ctx.restore();
+          const up = STEP_BY_PC[pc] < 6;
+          ctx.beginPath(); if (up) { ctx.moveTo(SP * .62, -2); ctx.lineTo(SP * .62, -SP * 3.4); } else { ctx.moveTo(-SP * .62, 2); ctx.lineTo(-SP * .62, SP * 3.4); } ctx.stroke();
+        }
+        if (SHARP[pc]) { ctx.fillStyle = '#1C1C24'; ctx.font = `700 ${SP * 1.3}px "Noto Music", "Segoe UI Symbol", serif`; ctx.textAlign = 'center'; ctx.fillText('♯', mode === 'animal' ? -SP * 1.55 : -SP * 1.25, SP * .45); }
+        ctx.restore();
+        // label under staff
+        ctx.globalAlpha = Math.min(1, age * 3);
+        ctx.fillStyle = color; ctx.font = '700 13px Fredoka, Inter, sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(NOTE_NAMES[pc], p.x, L.top + SP * 6.6);
+        if (mode === 'animal') { ctx.fillStyle = '#B0B0BB'; ctx.font = '600 9px Inter, sans-serif'; ctx.fillText(ANIMAL_BY_PC[pc], p.x, L.top + SP * 6.6 + 14); }
+        ctx.globalAlpha = 1;
+      });
+      if (!notes.length) {
+        ctx.fillStyle = '#B5B5C0'; ctx.font = '500 16px Inter, sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('Sing “la~” or tap a key — your first note will appear here', W / 2, top + SP * 2 + 6);
+      }
+    }
+
+    let last = performance.now();
+    function frame(t) {
+      const dt = Math.min(.05, (t - last) / 1000); last = t;
+      const { volume, pitch } = Mic.read(0.08);
+      document.getElementById('meter').style.width = `${Math.round(volume * 100)}%`;
+      document.getElementById('hz').textContent = pitch > 0 ? `${Math.round(pitch)} Hz` : '-- Hz';
+      const st = stab.push(pitch);
+      if (st) addNote(st.midi, false); else if (pitch < 0) lastMidi = -1;
+      holdTimer -= dt; if (holdTimer <= 0 && !playing) activeMidi = -1;
+
+      ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, W, H);
+      drawStaff();
+      for (let i = sparks.length - 1; i >= 0; i--) { const s = sparks[i]; s.x += s.vx; s.y += s.vy; s.vx *= .94; s.vy *= .94; s.life -= dt * 1.6; if (s.life <= 0) { sparks.splice(i, 1); continue; } ctx.globalAlpha = s.life; ctx.fillStyle = s.c; ctx.beginPath(); ctx.arc(s.x, s.y, 3, 0, 7); ctx.fill(); }
+      ctx.globalAlpha = 1;
+
+      const kbH = 112, pad = Math.max(16, W * .04);
+      keyRects = drawLightKeyboard(ctx, pad, H - kbH - 18, W - pad * 2, kbH, activeMidi, activeMidi >= 0 ? PITCH_COLORS[activeMidi % 12] : '#000');
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+
+    cv.addEventListener('pointerdown', e => { const m = hitKey(keyRects, e.clientX, e.clientY); if (m) { Mic.audioCtx().resume(); addNote(m, true); } });
+
+    /* ---------- Controls ---------- */
+    document.querySelectorAll('#mode button').forEach(b => b.addEventListener('click', () => {
+      document.querySelectorAll('#mode button').forEach(x => x.classList.remove('on')); b.classList.add('on'); mode = b.dataset.mode;
+    }));
+    document.getElementById('clear').addEventListener('click', () => { notes.length = 0; });
+    let playing = false;
+    document.getElementById('play').addEventListener('click', async () => {
+      if (playing || !notes.length) return;
+      playing = true; const ac = Mic.audioCtx(); await ac.resume();
+      for (const n of [...notes]) {
+        activeMidi = n.midi; holdTimer = .4;
+        playTone(ac, [midiToFreq(n.midi)], { dur: .5, vol: .16, type: 'triangle' });
+        await new Promise(r => setTimeout(r, 380));
+      }
+      playing = false;
+    });
+
+    const intro = document.getElementById('intro'), err = document.getElementById('error');
+    document.getElementById('start').addEventListener('click', async () => {
+      try { await Mic.init(); intro.style.display = 'none'; document.getElementById('mic').style.display = 'flex'; }
+      catch (e) { err.textContent = 'Microphone access is needed — or try “Play with keys only”.'; err.style.display = 'block'; }
+    });
+    document.getElementById('nomic').addEventListener('click', () => { Mic.audioCtx().resume(); intro.style.display = 'none'; });
+
+    // CASIO keyboard: each key press is written onto the staff (no mic needed)
+    CasioMIDI.onNote(m => { intro.style.display = 'none'; addNote(m, true, true); });
+  </script>
+</body>
+</html>
