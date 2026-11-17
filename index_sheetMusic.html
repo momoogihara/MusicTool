@@ -14,7 +14,7 @@
     .fun { font-family: 'Fredoka', 'Arial Rounded MT Bold', 'Inter', sans-serif; }
     canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 
-    .hud { position: absolute; top: 22px; left: 24px; right: 24px; display: flex; justify-content: space-between; align-items: center; z-index: 5; }
+    .hud { position: absolute; top: calc(var(--bar, 0px) + 14px); left: 24px; right: 24px; display: flex; justify-content: space-between; align-items: center; z-index: 5; }
     .left { display: flex; align-items: center; gap: 16px; }
     .brand { font-size: .72rem; font-weight: 600; letter-spacing: .22em; color: var(--muted); }
     .brand b { color: var(--ink); }
@@ -391,17 +391,26 @@
       },
       _badge() {
         // top-centre status pill for the CASIO keyboard
-        const bar = document.createElement('div');
-        bar.style.cssText = 'position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:60;display:flex;gap:8px;align-items:center';
-        const pill = 'display:flex;align-items:center;gap:8px;font:600 12px Inter,"Helvetica Neue",sans-serif;color:#111116;background:#fff;' +
-          'border:1px solid #E6E6EB;border-radius:999px;padding:8px 14px;cursor:pointer;text-decoration:none;box-shadow:0 6px 18px -10px rgba(0,0,0,.3)';
-        const b = document.createElement('button'); b.style.cssText = pill + ';display:none';
-        b.title = 'Click to switch the PC sound on/off';
-        b.onclick = () => { this.muted = !this.muted; this._render(); };
-        // "← Menu" back link on every tool page (not on the menu itself)
+        // Top strip (44 px): "← Menu" on the left, keyboard status on the right.
+        // Pages reserve the space with var(--bar). On the menu page there is no strip, only a small status pill.
         const path = location.pathname;
         const onMenu = /\/$|index\.html$/.test(path) && !/index_/.test(path);
-        if (!onMenu) { const menu = document.createElement('a'); menu.href = 'index.html'; menu.textContent = '← Menu'; menu.style.cssText = pill; bar.appendChild(menu); }
+        const css = document.createElement('style');
+        css.textContent = `:root{--bar:${onMenu ? 0 : 44}px}
+          .cm-bar{position:fixed;top:0;left:0;right:0;height:44px;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:12px;
+            padding:0 max(14px, env(safe-area-inset-right)) 0 max(14px, env(safe-area-inset-left));background:rgba(255,255,255,.94);
+            -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid #EEEEF2;font:600 13px Inter,-apple-system,"Helvetica Neue",sans-serif}
+          .cm-bar.float{left:auto;right:16px;top:14px;height:auto;padding:0;background:none;border:0;-webkit-backdrop-filter:none;backdrop-filter:none}
+          .cm-btn{display:flex;align-items:center;gap:8px;white-space:nowrap;color:#111116;background:#fff;border:1px solid #E6E6EB;border-radius:999px;
+            padding:6px 12px;font:inherit;cursor:pointer;text-decoration:none}
+          .cm-btn .muted{color:#8A8A96;font-weight:500}`;
+        document.head.appendChild(css);
+        const bar = document.createElement('div'); bar.className = 'cm-bar' + (onMenu ? ' float' : '');
+        if (!onMenu) { const menu = document.createElement('a'); menu.href = 'index.html'; menu.className = 'cm-btn'; menu.textContent = '← Menu'; bar.appendChild(menu); }
+        else bar.appendChild(document.createElement('span'));
+        const b = document.createElement('button'); b.className = 'cm-btn'; b.style.display = 'none';
+        b.title = 'Tap to switch the page sound on/off';
+        b.onclick = () => { this.muted = !this.muted; this._render(); };
         bar.appendChild(b); document.body.appendChild(bar); this.badge = b;
       },
       _render() {
@@ -409,13 +418,13 @@
         const dot = c => `<span style="width:8px;height:8px;border-radius:50%;background:${c}"></span>`;
         if (this.connected) {
           this.badge.style.display = 'flex';
-          this.badge.innerHTML = `${dot('#2FBF71')}CASIO keyboard connected<span style="color:#8A8A96;font-weight:500">· PC sound ${this.muted ? 'off' : 'on'}</span>`;
+          this.badge.innerHTML = `${dot('#2FBF71')}CASIO connected<span class="muted">· sound ${this.muted ? 'off' : 'on'}</span>`;
           return;
         }
         // short diagnostic so set-up problems are visible (hidden after 10 s)
-        const msg = { waiting: 'Looking for keyboard…', ready: 'No keyboard found — check the USB cable', none: 'This browser cannot read keyboards', denied: 'Keyboard access was blocked' }[this.state];
+        const msg = { waiting: 'Looking for keyboard…', ready: 'No keyboard — check the USB cable', none: 'This browser cannot read keyboards', denied: 'Keyboard access was blocked' }[this.state];
         this.badge.style.display = this._hint && msg ? 'flex' : 'none';
-        this.badge.innerHTML = `${dot('#C9C9D2')}<span style="color:#8A8A96">${msg || ''}</span>`;
+        this.badge.innerHTML = `${dot('#C9C9D2')}<span class="muted">${msg || ''}</span>`;
       }
     };
     CasioMIDI.init();
@@ -465,7 +474,7 @@
     function layout() {
       const cardW = Math.min(1100, W - 64), cardX = (W - cardW) / 2;
       const SP = Math.max(16, Math.min(28, H / 25));
-      const top = Math.max(150, H * .27);
+      const top = Math.max(100 + SP * 4.2, H * .27);
       return { cardX, cardW, SP, top, x0: cardX + 150, x1: cardX + cardW - 40 };
     }
     function notePos(i, midi) {
@@ -546,7 +555,7 @@
       for (let i = sparks.length - 1; i >= 0; i--) { const s = sparks[i]; s.x += s.vx; s.y += s.vy; s.vx *= .94; s.vy *= .94; s.life -= dt * 1.6; if (s.life <= 0) { sparks.splice(i, 1); continue; } ctx.globalAlpha = s.life; ctx.fillStyle = s.c; ctx.beginPath(); ctx.arc(s.x, s.y, 3, 0, 7); ctx.fill(); }
       ctx.globalAlpha = 1;
 
-      const kbH = 112, pad = Math.max(16, W * .04);
+      const kbH = Math.round(Math.min(112, Math.max(64, H * .16))), pad = Math.max(16, W * .04);
       keyRects = drawLightKeyboard(ctx, pad, H - kbH - 18, W - pad * 2, kbH, activeMidi, activeMidi >= 0 ? PITCH_COLORS[activeMidi % 12] : '#000');
       requestAnimationFrame(frame);
     }

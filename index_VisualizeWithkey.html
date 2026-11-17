@@ -13,7 +13,7 @@
       font-family: 'Inter', 'Helvetica Neue', 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
     canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 
-    .hud { position: absolute; top: 24px; left: 28px; right: 28px; display: flex; justify-content: space-between; align-items: flex-start; z-index: 5; pointer-events: none; }
+    .hud { position: absolute; top: calc(var(--bar, 0px) + 16px); left: 28px; right: 28px; display: flex; justify-content: space-between; align-items: flex-start; z-index: 5; pointer-events: none; }
     .brand { font-size: .72rem; font-weight: 600; letter-spacing: .24em; color: var(--muted); }
     .brand b { color: var(--ink); }
     .readout { text-align: right; font-variant-numeric: tabular-nums; display: none; }
@@ -51,15 +51,15 @@
     </div>
   </div>
 
-  <div id="note"><div class="big" id="note-big">—</div><div class="sub" id="note-sub">SING ANY NOTE</div></div>
+  <div id="note"><div class="big" id="note-big">—</div><div class="sub" id="note-sub">PLAY ANY KEY</div></div>
   <div class="legend" id="legend">LOW<div class="bar" id="legend-bar"></div>HIGH</div>
 
   <div id="intro">
     <div class="eyebrow">CASIO · SOUND INSTALLATION</div>
     <h1><span>Voice</span><span>to Visual</span></h1>
-    <p>Your voice paints the screen. Pitch picks the colour and height, volume sets the size. Sing, hum, clap — or play your CASIO keyboard: key = colour and height, touch = size, chords = many colours.</p>
+    <p>Play the CASIO keyboard and watch your music turn into art. The key sets the colour and height, how hard you play sets the size, and chords paint many colours at once.</p>
     <button class="btn" id="start">Start experience</button>
-    <p style="font-size:.85rem;margin-top:12px">CASIO keyboard connected? Just start playing — no microphone needed.</p>
+    <p style="font-size:.85rem;margin-top:12px">No keyboard? Tap the keys on the screen instead.</p>
     <div id="error"></div>
   </div>
 
@@ -264,17 +264,26 @@
       },
       _badge() {
         // top-centre status pill for the CASIO keyboard
-        const bar = document.createElement('div');
-        bar.style.cssText = 'position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:60;display:flex;gap:8px;align-items:center';
-        const pill = 'display:flex;align-items:center;gap:8px;font:600 12px Inter,"Helvetica Neue",sans-serif;color:#111116;background:#fff;' +
-          'border:1px solid #E6E6EB;border-radius:999px;padding:8px 14px;cursor:pointer;text-decoration:none;box-shadow:0 6px 18px -10px rgba(0,0,0,.3)';
-        const b = document.createElement('button'); b.style.cssText = pill + ';display:none';
-        b.title = 'Click to switch the PC sound on/off';
-        b.onclick = () => { this.muted = !this.muted; this._render(); };
-        // "← Menu" back link on every tool page (not on the menu itself)
+        // Top strip (44 px): "← Menu" on the left, keyboard status on the right.
+        // Pages reserve the space with var(--bar). On the menu page there is no strip, only a small status pill.
         const path = location.pathname;
         const onMenu = /\/$|index\.html$/.test(path) && !/index_/.test(path);
-        if (!onMenu) { const menu = document.createElement('a'); menu.href = 'index.html'; menu.textContent = '← Menu'; menu.style.cssText = pill; bar.appendChild(menu); }
+        const css = document.createElement('style');
+        css.textContent = `:root{--bar:${onMenu ? 0 : 44}px}
+          .cm-bar{position:fixed;top:0;left:0;right:0;height:44px;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:12px;
+            padding:0 max(14px, env(safe-area-inset-right)) 0 max(14px, env(safe-area-inset-left));background:rgba(255,255,255,.94);
+            -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid #EEEEF2;font:600 13px Inter,-apple-system,"Helvetica Neue",sans-serif}
+          .cm-bar.float{left:auto;right:16px;top:14px;height:auto;padding:0;background:none;border:0;-webkit-backdrop-filter:none;backdrop-filter:none}
+          .cm-btn{display:flex;align-items:center;gap:8px;white-space:nowrap;color:#111116;background:#fff;border:1px solid #E6E6EB;border-radius:999px;
+            padding:6px 12px;font:inherit;cursor:pointer;text-decoration:none}
+          .cm-btn .muted{color:#8A8A96;font-weight:500}`;
+        document.head.appendChild(css);
+        const bar = document.createElement('div'); bar.className = 'cm-bar' + (onMenu ? ' float' : '');
+        if (!onMenu) { const menu = document.createElement('a'); menu.href = 'index.html'; menu.className = 'cm-btn'; menu.textContent = '← Menu'; bar.appendChild(menu); }
+        else bar.appendChild(document.createElement('span'));
+        const b = document.createElement('button'); b.className = 'cm-btn'; b.style.display = 'none';
+        b.title = 'Tap to switch the page sound on/off';
+        b.onclick = () => { this.muted = !this.muted; this._render(); };
         bar.appendChild(b); document.body.appendChild(bar); this.badge = b;
       },
       _render() {
@@ -282,13 +291,13 @@
         const dot = c => `<span style="width:8px;height:8px;border-radius:50%;background:${c}"></span>`;
         if (this.connected) {
           this.badge.style.display = 'flex';
-          this.badge.innerHTML = `${dot('#2FBF71')}CASIO keyboard connected<span style="color:#8A8A96;font-weight:500">· PC sound ${this.muted ? 'off' : 'on'}</span>`;
+          this.badge.innerHTML = `${dot('#2FBF71')}CASIO connected<span class="muted">· sound ${this.muted ? 'off' : 'on'}</span>`;
           return;
         }
         // short diagnostic so set-up problems are visible (hidden after 10 s)
-        const msg = { waiting: 'Looking for keyboard…', ready: 'No keyboard found — check the USB cable', none: 'This browser cannot read keyboards', denied: 'Keyboard access was blocked' }[this.state];
+        const msg = { waiting: 'Looking for keyboard…', ready: 'No keyboard — check the USB cable', none: 'This browser cannot read keyboards', denied: 'Keyboard access was blocked' }[this.state];
         this.badge.style.display = this._hint && msg ? 'flex' : 'none';
-        this.badge.innerHTML = `${dot('#C9C9D2')}<span style="color:#8A8A96">${msg || ''}</span>`;
+        this.badge.innerHTML = `${dot('#C9C9D2')}<span class="muted">${msg || ''}</span>`;
       }
     };
     CasioMIDI.init();
@@ -302,7 +311,7 @@
     addEventListener('resize', resize); resize();
 
     document.getElementById('legend-bar').style.background = `linear-gradient(90deg, ${PITCH_COLORS.join(',')})`;
-    const KB_H = SHOW_KEYS ? 104 : 0, KB_GAP = SHOW_KEYS ? 22 : 0;
+    const KB_H = SHOW_KEYS ? Math.round(Math.min(104, Math.max(64, innerHeight * .16))) : 0, KB_GAP = SHOW_KEYS ? 22 : 0;
     const stageBottom = () => H - KB_H - KB_GAP * 2;
     document.getElementById('note').style.bottom = `${KB_H + KB_GAP * 2 + 24}px`;
     document.getElementById('legend').style.bottom = `${KB_H + KB_GAP * 2 + 28}px`;
@@ -369,14 +378,25 @@
       if (shapes.length > 120) shapes.splice(0, shapes.length - 120);
     }
 
+    // notes sounding right now (keys held on the CASIO keyboard, or the last tapped key)
+    function liveNotes() {
+      if (CasioMIDI.held.size) return [...CasioMIDI.held.keys()];
+      return manual > 0 && rawMidi >= 0 ? [rawMidi] : [];
+    }
+
     function drawSpectrum(cx, cy, R) {
-      const bins = Mic.ready ? Mic.freq : null, N = 120;
+      const N = 120, notes = liveNotes(), lvl = smoothVol;
       ctx.save(); ctx.translate(cx, cy); ctx.rotate(spin);
       ctx.strokeStyle = '#111116'; ctx.lineWidth = 1.4; ctx.lineCap = 'round';
       for (let i = 0; i < N; i++) {
-        const v = bins ? bins[2 + Math.floor(Math.pow(i / N, 1.6) * 260)] / 255 : 0;
-        const len = 4 + v * R * .9 + (manual > 0 ? Math.sin(i * .7 + spin * 6) * 6 * manual : 0);
-        const a = i / N * Math.PI * 2;
+        const pos = i / N; let v = 0;
+        notes.forEach(m => {                       // a peak for each note + its first two harmonics
+          const p0 = Math.max(0, Math.min(1, (m - 30) / 66));
+          [[0, 1], [12 / 66, .55], [19 / 66, .35]].forEach(([off, g]) => { const d = (pos - p0 - off); v += g * Math.exp(-d * d / .0012); });
+        });
+        v = Math.min(1, v * lvl * 1.4 + (notes.length ? .06 * Math.abs(Math.sin(i * 1.7 + spin * 9)) : 0));
+        const len = 4 + v * R * .9;
+        const a = pos * Math.PI * 2;
         ctx.globalAlpha = .25 + v * .75;
         ctx.beginPath(); ctx.moveTo(Math.cos(a) * R, Math.sin(a) * R); ctx.lineTo(Math.cos(a) * (R + len), Math.sin(a) * (R + len)); ctx.stroke();
       }
@@ -389,11 +409,20 @@
       ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.stroke(); ctx.globalAlpha = 1;
     }
 
+    let wavePhase = 0;
     function drawWave(y) {
-      if (!Mic.ready) return;
-      const b = Mic.buf; ctx.strokeStyle = '#111116'; ctx.lineWidth = 1.3; ctx.globalAlpha = .85;
+      const notes = liveNotes(); wavePhase += .08;
+      const amp = notes.length ? 18 + smoothVol * 70 : 0;
+      ctx.strokeStyle = '#111116'; ctx.lineWidth = 1.3; ctx.globalAlpha = notes.length ? .85 : .2;
       ctx.beginPath();
-      for (let i = 0; i < b.length; i += 4) { const x = i / b.length * W; const yy = y + b[i] * (60 + smoothVol * 220); i ? ctx.lineTo(x, yy) : ctx.moveTo(x, yy); }
+      for (let x = 0; x <= W; x += 3) {
+        let v = 0;
+        notes.forEach(m => { const k = midiToFreq(m) / 261.63 * .045; v += Math.sin(x * k + wavePhase * (1 + k * 8)); });
+        if (notes.length) v /= Math.sqrt(notes.length);
+        const env = Math.sin(Math.PI * x / W);                 // taper at both edges
+        const yy = y + v * amp * env;
+        x ? ctx.lineTo(x, yy) : ctx.moveTo(x, yy);
+      }
       ctx.stroke(); ctx.globalAlpha = 1;
     }
 
@@ -414,7 +443,7 @@
         manual = Math.max(manual, .35 + v / 127 * .65); lastPitch = midiToFreq(m);
         heldMidi = arr[arr.length - 1][0];
       }
-      const r = Mic.read(0.05); vol = Math.max(r.volume, manual * .6); pitch = r.pitch;
+      const r = { volume: 0, pitch: -1 };   // microphone not used vol = Math.max(r.volume, manual * .6); pitch = r.pitch;
       manual = Math.max(0, manual - dt * .8);
       smoothVol += (vol - smoothVol) * .2;
       spin += dt * (.08 + smoothVol * .6);
@@ -428,13 +457,13 @@
 
       // HUD
       document.getElementById('vol').textContent = vol.toFixed(2);
-      document.getElementById('hz').textContent = st ? `${Math.round(st.freq)} Hz` : '— Hz';
+      document.getElementById('hz').textContent = activeMidi >= 0 && rawMidi >= 0 ? `${Math.round(midiToFreq(rawMidi))} Hz` : '— Hz';
       if (SHOW_KEYS) {
         const nb = document.getElementById('note-big');
         const fromVoice = st && heldMidi < 0;
         const dm = fromVoice ? st.midi : (activeMidi >= 0 && rawMidi >= 0 ? rawMidi : activeMidi);
         if (activeMidi >= 0) { nb.textContent = NOTE_NAMES[dm % 12] + (Math.floor(dm / 12) - 1); nb.style.color = PITCH_COLORS[dm % 12]; document.getElementById('note-sub').textContent = fromVoice ? `${Math.round(st.freq)} HZ` : (fromCasio ? 'CASIO KEYBOARD' : 'KEY'); }
-        else { nb.style.color = '#E4E4EA'; document.getElementById('note-sub').textContent = 'SING ANY NOTE'; }
+        else { nb.style.color = '#E4E4EA'; document.getElementById('note-sub').textContent = 'PLAY ANY KEY'; }
       }
 
       // draw
@@ -479,13 +508,10 @@
       rawMidi = m; fromCasio = true; activeMidi = foldMidi(m); lastPitch = midiToFreq(m); manual = Math.max(manual, v);
       for (let i = 0; i < 2 + v * 6; i++) spawn(lastPitch, .35 + v * .65);
     });
-    document.getElementById('start').addEventListener('click', async () => {
-      try {
-        await Mic.init();
-        showStage();
-      } catch (e) {
-        const er = document.getElementById('error'); er.textContent = 'Microphone access is required for this experience.'; er.style.display = 'block';
-      }
+    // Start: no microphone — just open the stage (and unlock audio for on-screen keys)
+    document.getElementById('start').addEventListener('click', () => {
+      try { Mic.audioCtx().resume(); } catch (e) {}
+      showStage();
     });
   </script>
 </body>

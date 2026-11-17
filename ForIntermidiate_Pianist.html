@@ -32,7 +32,7 @@
       height: 100vh;
       max-width: 1080px;
       margin: 0 auto;
-      padding: 28px 32px 24px;
+      padding: calc(var(--bar, 0px) + 20px) 32px 24px;
       display: flex;
       flex-direction: column;
       gap: 20px;
@@ -118,8 +118,12 @@
       background: linear-gradient(#2A2A33, #17171D);
       border-radius: 0 0 7px 7px;
       box-shadow: inset 0 -5px 0 #000, 0 3px 6px rgba(0,0,0,.35);
-      z-index: 2; pointer-events: none;
+      z-index: 2; cursor: pointer; transition: transform .06s ease;
+      display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px;
     }
+    .black .sc { font-size: .6rem; font-weight: 600; color: #6E6E7A; }
+    .black.down { transform: translateY(2px); box-shadow: inset 0 -2px 0 #000, 0 1px 3px rgba(0,0,0,.35); }
+    .black.miss { animation: shake .25s; background: linear-gradient(#FF7B7B, #E5383B); }
     @keyframes bob { 0%,100% { transform: translate(-50%, 0) rotate(45deg); } 50% { transform: translate(-50%, -5px) rotate(45deg); } }
     @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
 
@@ -164,7 +168,14 @@
 
     @media (max-height: 760px) {
       .white { height: 180px; } .black { height: 110px; }
-      .app { gap: 14px; padding-top: 18px; }
+      .app { gap: 14px; padding-top: calc(var(--bar, 0px) + 12px); }
+    }
+    @media (max-height: 560px) {   /* phones in landscape: let the page scroll */
+      body { overflow-y: auto; }
+      .app { height: auto; min-height: 100vh; gap: 10px; padding-bottom: 16px; }
+      .brand h1 { font-size: 1.5rem; } .stat.timer .value { font-size: 2rem; } .stat .value { font-size: 1.1rem; }
+      .white { height: 140px; } .black { height: 86px; }
+      .keys-area { gap: 26px; }
     }
   </style>
 </head>
@@ -196,7 +207,7 @@
     </div>
 
     <div class="keys-area">
-      <div class="hint">Play on your <b>CASIO keyboard</b> — or click the keys / use <kbd>1</kbd>–<kbd>7</kbd> · <kbd>A</kbd>–<kbd>J</kbd></div>
+      <div class="hint">Play on your <b>CASIO keyboard</b> — or click the keys / use <kbd>A</kbd>–<kbd>J</kbd> (black: <kbd>W</kbd><kbd>E</kbd><kbd>T</kbd><kbd>Y</kbd><kbd>U</kbd>)</div>
       <div class="piano" id="piano"></div>
     </div>
   </div>
@@ -311,17 +322,26 @@
       },
       _badge() {
         // top-centre status pill for the CASIO keyboard
-        const bar = document.createElement('div');
-        bar.style.cssText = 'position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:60;display:flex;gap:8px;align-items:center';
-        const pill = 'display:flex;align-items:center;gap:8px;font:600 12px Inter,"Helvetica Neue",sans-serif;color:#111116;background:#fff;' +
-          'border:1px solid #E6E6EB;border-radius:999px;padding:8px 14px;cursor:pointer;text-decoration:none;box-shadow:0 6px 18px -10px rgba(0,0,0,.3)';
-        const b = document.createElement('button'); b.style.cssText = pill + ';display:none';
-        b.title = 'Click to switch the PC sound on/off';
-        b.onclick = () => { this.muted = !this.muted; this._render(); };
-        // "← Menu" back link on every tool page (not on the menu itself)
+        // Top strip (44 px): "← Menu" on the left, keyboard status on the right.
+        // Pages reserve the space with var(--bar). On the menu page there is no strip, only a small status pill.
         const path = location.pathname;
         const onMenu = /\/$|index\.html$/.test(path) && !/index_/.test(path);
-        if (!onMenu) { const menu = document.createElement('a'); menu.href = 'index.html'; menu.textContent = '← Menu'; menu.style.cssText = pill; bar.appendChild(menu); }
+        const css = document.createElement('style');
+        css.textContent = `:root{--bar:${onMenu ? 0 : 44}px}
+          .cm-bar{position:fixed;top:0;left:0;right:0;height:44px;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:12px;
+            padding:0 max(14px, env(safe-area-inset-right)) 0 max(14px, env(safe-area-inset-left));background:rgba(255,255,255,.94);
+            -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid #EEEEF2;font:600 13px Inter,-apple-system,"Helvetica Neue",sans-serif}
+          .cm-bar.float{left:auto;right:16px;top:14px;height:auto;padding:0;background:none;border:0;-webkit-backdrop-filter:none;backdrop-filter:none}
+          .cm-btn{display:flex;align-items:center;gap:8px;white-space:nowrap;color:#111116;background:#fff;border:1px solid #E6E6EB;border-radius:999px;
+            padding:6px 12px;font:inherit;cursor:pointer;text-decoration:none}
+          .cm-btn .muted{color:#8A8A96;font-weight:500}`;
+        document.head.appendChild(css);
+        const bar = document.createElement('div'); bar.className = 'cm-bar' + (onMenu ? ' float' : '');
+        if (!onMenu) { const menu = document.createElement('a'); menu.href = 'index.html'; menu.className = 'cm-btn'; menu.textContent = '← Menu'; bar.appendChild(menu); }
+        else bar.appendChild(document.createElement('span'));
+        const b = document.createElement('button'); b.className = 'cm-btn'; b.style.display = 'none';
+        b.title = 'Tap to switch the page sound on/off';
+        b.onclick = () => { this.muted = !this.muted; this._render(); };
         bar.appendChild(b); document.body.appendChild(bar); this.badge = b;
       },
       _render() {
@@ -329,13 +349,13 @@
         const dot = c => `<span style="width:8px;height:8px;border-radius:50%;background:${c}"></span>`;
         if (this.connected) {
           this.badge.style.display = 'flex';
-          this.badge.innerHTML = `${dot('#2FBF71')}CASIO keyboard connected<span style="color:#8A8A96;font-weight:500">· PC sound ${this.muted ? 'off' : 'on'}</span>`;
+          this.badge.innerHTML = `${dot('#2FBF71')}CASIO connected<span class="muted">· sound ${this.muted ? 'off' : 'on'}</span>`;
           return;
         }
         // short diagnostic so set-up problems are visible (hidden after 10 s)
-        const msg = { waiting: 'Looking for keyboard…', ready: 'No keyboard found — check the USB cable', none: 'This browser cannot read keyboards', denied: 'Keyboard access was blocked' }[this.state];
+        const msg = { waiting: 'Looking for keyboard…', ready: 'No keyboard — check the USB cable', none: 'This browser cannot read keyboards', denied: 'Keyboard access was blocked' }[this.state];
         this.badge.style.display = this._hint && msg ? 'flex' : 'none';
-        this.badge.innerHTML = `${dot('#C9C9D2')}<span style="color:#8A8A96">${msg || ''}</span>`;
+        this.badge.innerHTML = `${dot('#C9C9D2')}<span class="muted">${msg || ''}</span>`;
       }
     };
     CasioMIDI.init();
@@ -349,8 +369,8 @@
     ].map(([note, dur]) => ({ note, dur }));
 
     const NOTES = ['C','D','E','F','G','A','B'];
-    const FREQ = { C: 261.63, D: 293.66, E: 329.63, F: 349.23, G: 392.00, A: 440.00, B: 493.88 };
-    const SHORTCUT = { '1':'C','2':'D','3':'E','4':'F','5':'G','6':'A','7':'B', a:'C', s:'D', d:'E', f:'F', g:'G', h:'A', j:'B' };
+    const FREQ = { C: 261.63, 'C#': 277.18, D: 293.66, 'D#': 311.13, E: 329.63, F: 349.23, 'F#': 369.99, G: 392.00, 'G#': 415.30, A: 440.00, 'A#': 466.16, B: 493.88 };
+    const SHORTCUT = { '1':'C','2':'D','3':'E','4':'F','5':'G','6':'A','7':'B', a:'C', s:'D', d:'E', f:'F', g:'G', h:'A', j:'B', w:'C#', e:'D#', t:'F#', y:'G#', u:'A#' };
     const TIME_LIMIT = 30;
 
     /* ---------- Build piano ---------- */
@@ -362,15 +382,17 @@
       k.addEventListener('pointerdown', () => handleInput(n));
       piano.appendChild(k);
     });
-    // black keys between C-D, D-E, F-G, G-A, A-B (visual only)
+    // black keys between C-D, D-E, F-G, G-A, A-B — playable (a wrong black key counts as a miss)
     const KW = 96; // white width + margins
-    [0, 1, 3, 4, 5].forEach(i => {
+    [[0, 'C#', 'W'], [1, 'D#', 'E'], [3, 'F#', 'T'], [4, 'G#', 'Y'], [5, 'A#', 'U']].forEach(([i, n, sc]) => {
       const b = document.createElement('div');
-      b.className = 'black';
+      b.className = 'black'; b.dataset.note = n;
+      b.innerHTML = `<span class="sc">${sc}</span>`;
       b.style.left = `${10 + KW * (i + 1) - 27}px`;
+      b.addEventListener('pointerdown', e => { e.stopPropagation(); handleInput(n); });
       piano.appendChild(b);
     });
-    const keyEl = n => piano.querySelector(`.white[data-note="${n}"]`);
+    const keyEl = n => piano.querySelector(`[data-note="${n}"]`);
 
     /* ---------- Score rendering (SVG) ---------- */
     const SP = 11;                 // staff line spacing

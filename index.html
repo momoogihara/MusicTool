@@ -85,8 +85,8 @@
         <div class="body">
           <div class="row"><span class="level" style="background:#EDEDF2;color:#55555F">EVERYONE</span><span class="num">04</span></div>
           <h2>Voice to Visual</h2>
-          <p>Sound becomes moving art. Pitch picks the colour, touch or volume sets the size.</p>
-          <div class="inputs"><span>CASIO keyboard</span><span>Voice</span><span>Touch</span></div>
+          <p>Music becomes moving art. The key picks the colour, how hard you play sets the size.</p>
+          <div class="inputs"><span>CASIO keyboard</span><span>Touch</span></div>
           <span class="alt" onclick="event.preventDefault(); location.href='index_VisualizesMusic.html'">Open screen-only version (no keyboard on screen) →</span>
         </div>
       </a>
@@ -426,17 +426,26 @@
       },
       _badge() {
         // top-centre status pill for the CASIO keyboard
-        const bar = document.createElement('div');
-        bar.style.cssText = 'position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:60;display:flex;gap:8px;align-items:center';
-        const pill = 'display:flex;align-items:center;gap:8px;font:600 12px Inter,"Helvetica Neue",sans-serif;color:#111116;background:#fff;' +
-          'border:1px solid #E6E6EB;border-radius:999px;padding:8px 14px;cursor:pointer;text-decoration:none;box-shadow:0 6px 18px -10px rgba(0,0,0,.3)';
-        const b = document.createElement('button'); b.style.cssText = pill + ';display:none';
-        b.title = 'Click to switch the PC sound on/off';
-        b.onclick = () => { this.muted = !this.muted; this._render(); };
-        // "← Menu" back link on every tool page (not on the menu itself)
+        // Top strip (44 px): "← Menu" on the left, keyboard status on the right.
+        // Pages reserve the space with var(--bar). On the menu page there is no strip, only a small status pill.
         const path = location.pathname;
         const onMenu = /\/$|index\.html$/.test(path) && !/index_/.test(path);
-        if (!onMenu) { const menu = document.createElement('a'); menu.href = 'index.html'; menu.textContent = '← Menu'; menu.style.cssText = pill; bar.appendChild(menu); }
+        const css = document.createElement('style');
+        css.textContent = `:root{--bar:${onMenu ? 0 : 44}px}
+          .cm-bar{position:fixed;top:0;left:0;right:0;height:44px;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:12px;
+            padding:0 max(14px, env(safe-area-inset-right)) 0 max(14px, env(safe-area-inset-left));background:rgba(255,255,255,.94);
+            -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid #EEEEF2;font:600 13px Inter,-apple-system,"Helvetica Neue",sans-serif}
+          .cm-bar.float{left:auto;right:16px;top:14px;height:auto;padding:0;background:none;border:0;-webkit-backdrop-filter:none;backdrop-filter:none}
+          .cm-btn{display:flex;align-items:center;gap:8px;white-space:nowrap;color:#111116;background:#fff;border:1px solid #E6E6EB;border-radius:999px;
+            padding:6px 12px;font:inherit;cursor:pointer;text-decoration:none}
+          .cm-btn .muted{color:#8A8A96;font-weight:500}`;
+        document.head.appendChild(css);
+        const bar = document.createElement('div'); bar.className = 'cm-bar' + (onMenu ? ' float' : '');
+        if (!onMenu) { const menu = document.createElement('a'); menu.href = 'index.html'; menu.className = 'cm-btn'; menu.textContent = '← Menu'; bar.appendChild(menu); }
+        else bar.appendChild(document.createElement('span'));
+        const b = document.createElement('button'); b.className = 'cm-btn'; b.style.display = 'none';
+        b.title = 'Tap to switch the page sound on/off';
+        b.onclick = () => { this.muted = !this.muted; this._render(); };
         bar.appendChild(b); document.body.appendChild(bar); this.badge = b;
       },
       _render() {
@@ -444,13 +453,13 @@
         const dot = c => `<span style="width:8px;height:8px;border-radius:50%;background:${c}"></span>`;
         if (this.connected) {
           this.badge.style.display = 'flex';
-          this.badge.innerHTML = `${dot('#2FBF71')}CASIO keyboard connected<span style="color:#8A8A96;font-weight:500">· PC sound ${this.muted ? 'off' : 'on'}</span>`;
+          this.badge.innerHTML = `${dot('#2FBF71')}CASIO connected<span class="muted">· sound ${this.muted ? 'off' : 'on'}</span>`;
           return;
         }
         // short diagnostic so set-up problems are visible (hidden after 10 s)
-        const msg = { waiting: 'Looking for keyboard…', ready: 'No keyboard found — check the USB cable', none: 'This browser cannot read keyboards', denied: 'Keyboard access was blocked' }[this.state];
+        const msg = { waiting: 'Looking for keyboard…', ready: 'No keyboard — check the USB cable', none: 'This browser cannot read keyboards', denied: 'Keyboard access was blocked' }[this.state];
         this.badge.style.display = this._hint && msg ? 'flex' : 'none';
-        this.badge.innerHTML = `${dot('#C9C9D2')}<span style="color:#8A8A96">${msg || ''}</span>`;
+        this.badge.innerHTML = `${dot('#C9C9D2')}<span class="muted">${msg || ''}</span>`;
       }
     };
     CasioMIDI.init();
