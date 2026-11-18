@@ -13,8 +13,8 @@
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { height: 100%; }
-    body { background: #fff; color: var(--ink); font-family: 'Inter', 'Helvetica Neue', 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; overflow: hidden; }
-    .app { height: 100vh; max-width: 1180px; margin: 0 auto; padding: 22px 32px 20px; display: grid; grid-template-rows: auto auto 1fr auto; gap: 16px; }
+    body { background: #fff; color: var(--ink); font-family: 'Inter', 'Helvetica Neue', 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; overflow-y: auto; }
+    .app { min-height: 100vh; max-width: 1180px; margin: 0 auto; padding: calc(var(--bar, 0px) + 16px) 32px 20px; display: grid; grid-template-rows: auto auto auto auto; align-content: start; gap: 16px; }
 
     /* Header + transport */
     header { display: flex; justify-content: space-between; align-items: center; }
@@ -33,7 +33,7 @@
     .play svg { width: 20px; height: 20px; }
 
     /* Step labels */
-    .step-h { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+    .step-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-bottom: 10px; }
     .step-h .n { font-size: .7rem; font-weight: 800; color: #fff; background: var(--ink); border-radius: 6px; padding: 3px 7px; }
     .step-h .t { font-size: .95rem; font-weight: 700; }
     .step-h .d { font-size: .8rem; color: var(--muted); }
@@ -87,7 +87,16 @@
     .wk span { font-size: .65rem; font-weight: 700; color: #C4C4CC; }
     .wk.on { background: linear-gradient(#fff, var(--accent)); transform: translateY(3px); box-shadow: inset 0 -2px 0 var(--accent); }
     .wk.on b, .wk.on span { color: #fff; }
-    .bk { position: absolute; top: 8px; width: 42px; height: 92px; background: linear-gradient(#2A2A33, #16161C); border-radius: 0 0 6px 6px; pointer-events: none; z-index: 2; }
+    .bk { position: absolute; top: 8px; width: 42px; height: 92px; background: linear-gradient(#2A2A33, #16161C); border-radius: 0 0 6px 6px; z-index: 2; cursor: pointer; transition: transform .05s, background .1s; }
+    .bk.on { background: linear-gradient(#2A2A33, var(--accent)); transform: translateY(2px); }
+    .recbar { display: none; align-items: center; gap: 8px; flex-wrap: wrap; margin: -2px 0 10px; }
+    .recbar.show { display: flex; }
+    .recbar .rec-hint { margin-right: 4px; }
+    .recbtn { font: 600 .8rem 'Inter', sans-serif; border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 7px 14px; cursor: pointer; color: var(--ink); }
+    .recbtn.danger { color: #E5383B; border-color: #F5C2C3; }
+    .recbtn:disabled { opacity: .4; cursor: default; }
+    .lane .cell.rec { cursor: pointer; }
+    .lane .cell.rec:hover .hit, .lane .cell.rec:active .hit { background: #E5383B !important; }
 
     /* Start overlay */
     #intro { position: fixed; inset: 0; background: rgba(255,255,255,.88); backdrop-filter: blur(10px); z-index: 50; display: flex; align-items: center; justify-content: center; }
@@ -102,6 +111,8 @@
     .ghostbtn { font: 600 .75rem 'Inter', sans-serif; border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 4px 10px; cursor: pointer; color: var(--muted); margin-left: 8px; }
 
     @media (max-height: 820px) { .wk { height: 120px; } .bk { height: 72px; } .lane { height: 30px; } .track { padding: 5px 8px; } .app { gap: 12px; } }
+    @media (max-width: 1000px) { .app { padding-left: 18px; padding-right: 18px; } .track { grid-template-columns: 220px 1fr; gap: 10px; } .tsub { display: none; } .style { padding: 10px 12px; } .style .ds { font-size: .7rem; } }
+    @media (max-height: 560px) { .wk { height: 104px; } .bk { height: 62px; } .lane { height: 26px; } h1 { font-size: 1.4rem; } }
   </style>
 </head>
 <body>
@@ -129,7 +140,13 @@
     </section>
 
     <section class="melody">
-      <div class="step-h"><span class="n">3</span><span class="t">Play the melody on top</span><span class="d">CASIO <b>C4 – C5</b>, keys <b>1 – 8</b>, or click</span><span id="rec-note"></span></div>
+      <div class="step-h"><span class="n">3</span><span class="t">Play the melody on top</span><span class="d">CASIO keyboard (black keys too), PC keys <b>1 – 8</b>, or tap</span></div>
+      <div class="recbar" id="recbar">
+        <span class="rec-hint">● Recording</span>
+        <button class="recbtn" id="undo-btn">↶ Undo last note</button>
+        <button class="recbtn danger" id="clear-btn">✕ Clear all</button>
+        <span class="d" id="rec-count" style="font-size:.78rem;color:var(--muted)"></span>
+      </div>
       <div class="keys" id="keys"></div>
     </section>
   </div>
@@ -224,17 +241,26 @@
       },
       _badge() {
         // top-centre status pill for the CASIO keyboard
-        const bar = document.createElement('div');
-        bar.style.cssText = 'position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:60;display:flex;gap:8px;align-items:center';
-        const pill = 'display:flex;align-items:center;gap:8px;font:600 12px Inter,"Helvetica Neue",sans-serif;color:#111116;background:#fff;' +
-          'border:1px solid #E6E6EB;border-radius:999px;padding:8px 14px;cursor:pointer;text-decoration:none;box-shadow:0 6px 18px -10px rgba(0,0,0,.3)';
-        const b = document.createElement('button'); b.style.cssText = pill + ';display:none';
-        b.title = 'Click to switch the PC sound on/off';
-        b.onclick = () => { this.muted = !this.muted; this._render(); };
-        // "← Menu" back link on every tool page (not on the menu itself)
+        // Top strip (44 px): "← Menu" on the left, keyboard status on the right.
+        // Pages reserve the space with var(--bar). On the menu page there is no strip, only a small status pill.
         const path = location.pathname;
         const onMenu = /\/$|index\.html$/.test(path) && !/index_/.test(path);
-        if (!onMenu) { const menu = document.createElement('a'); menu.href = 'index.html'; menu.textContent = '← Menu'; menu.style.cssText = pill; bar.appendChild(menu); }
+        const css = document.createElement('style');
+        css.textContent = `:root{--bar:${onMenu ? 0 : 44}px}
+          .cm-bar{position:fixed;top:0;left:0;right:0;height:44px;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:12px;
+            padding:0 max(14px, env(safe-area-inset-right)) 0 max(14px, env(safe-area-inset-left));background:rgba(255,255,255,.94);
+            -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid #EEEEF2;font:600 13px Inter,-apple-system,"Helvetica Neue",sans-serif}
+          .cm-bar.float{left:auto;right:16px;top:14px;height:auto;padding:0;background:none;border:0;-webkit-backdrop-filter:none;backdrop-filter:none}
+          .cm-btn{display:flex;align-items:center;gap:8px;white-space:nowrap;color:#111116;background:#fff;border:1px solid #E6E6EB;border-radius:999px;
+            padding:6px 12px;font:inherit;cursor:pointer;text-decoration:none}
+          .cm-btn .muted{color:#8A8A96;font-weight:500}`;
+        document.head.appendChild(css);
+        const bar = document.createElement('div'); bar.className = 'cm-bar' + (onMenu ? ' float' : '');
+        if (!onMenu) { const menu = document.createElement('a'); menu.href = 'index.html'; menu.className = 'cm-btn'; menu.textContent = '← Menu'; bar.appendChild(menu); }
+        else bar.appendChild(document.createElement('span'));
+        const b = document.createElement('button'); b.className = 'cm-btn'; b.style.display = 'none';
+        b.title = 'Tap to switch the page sound on/off';
+        b.onclick = () => { this.muted = !this.muted; this._render(); };
         bar.appendChild(b); document.body.appendChild(bar); this.badge = b;
       },
       _render() {
@@ -242,13 +268,13 @@
         const dot = c => `<span style="width:8px;height:8px;border-radius:50%;background:${c}"></span>`;
         if (this.connected) {
           this.badge.style.display = 'flex';
-          this.badge.innerHTML = `${dot('#2FBF71')}CASIO keyboard connected<span style="color:#8A8A96;font-weight:500">· PC sound ${this.muted ? 'off' : 'on'}</span>`;
+          this.badge.innerHTML = `${dot('#2FBF71')}CASIO connected<span class="muted">· sound ${this.muted ? 'off' : 'on'}</span>`;
           return;
         }
         // short diagnostic so set-up problems are visible (hidden after 10 s)
-        const msg = { waiting: 'Looking for keyboard…', ready: 'No keyboard found — check the USB cable', none: 'This browser cannot read keyboards', denied: 'Keyboard access was blocked' }[this.state];
+        const msg = { waiting: 'Looking for keyboard…', ready: 'No keyboard — check the USB cable', none: 'This browser cannot read keyboards', denied: 'Keyboard access was blocked' }[this.state];
         this.badge.style.display = this._hint && msg ? 'flex' : 'none';
-        this.badge.innerHTML = `${dot('#C9C9D2')}<span style="color:#8A8A96">${msg || ''}</span>`;
+        this.badge.innerHTML = `${dot('#C9C9D2')}<span class="muted">${msg || ''}</span>`;
       }
     };
     CasioMIDI.init();
@@ -266,11 +292,13 @@
       { id: 'piano',   key: 'e', casio: 'E3', name: 'Piano',   sub: 'Style melody',           icon: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 5v8M12 5v8M16 5v8M7 13h2M11 13h2M15 13h2"/>' },
       { id: 'strings', key: 'r', casio: 'F3', name: 'Strings', sub: 'Long warm chord',        icon: '<path d="M4 18c4-10 12-10 16 0"/><path d="M7 18c3-6 7-6 10 0"/><path d="M10 18c1-2 3-2 4 0"/>' }
     ];
-    const SOLO = [['C', 261.63, '1'], ['D', 293.66, '2'], ['E', 329.63, '3'], ['F', 349.23, '4'], ['G', 392.0, '5'], ['A', 440.0, '6'], ['B', 493.88, '7'], ['C', 523.25, '8']];
+    // melody keys C4…C5, black keys included (index = semitone above C4)
+    const SOLO = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B','C'].map((n, i) => [n, 261.63 * Math.pow(2, i / 12)]);
+    const WHITE_KEYS = [0, 2, 4, 5, 7, 9, 11, 12];      // PC keys 1…8
     const NAME_BY_FREQ = f => { const m = Math.round(12 * Math.log2(f / 440)) + 69; return ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'][m % 12]; };
 
     /* ---------- State ---------- */
-    const S = { style: 'bollywood', on: { drums: true, bass: false, piano: false, strings: false }, playing: false, step: 0, custom: Array(16).fill(null) };
+    const S = { style: 'bollywood', on: { drums: true, bass: false, piano: false, strings: false }, playing: false, step: 0, custom: Array(16).fill(null), history: [] };
 
     /* ---------- Build UI ---------- */
     const stylesEl = document.getElementById('styles');
@@ -288,12 +316,16 @@
     });
 
     const keysEl = document.getElementById('keys');
-    SOLO.forEach(([n, f, k], i) => {
-      const w = document.createElement('div'); w.className = 'wk'; w.dataset.i = i;
-      w.innerHTML = `<b>${n}</b><span>${k}</span>`;
-      w.addEventListener('pointerdown', () => solo(i)); keysEl.appendChild(w);
+    WHITE_KEYS.forEach((si, wi) => {
+      const w = document.createElement('div'); w.className = 'wk'; w.dataset.i = si;
+      w.innerHTML = `<b>${SOLO[si][0]}</b><span>${wi + 1}</span>`;
+      w.addEventListener('pointerdown', () => solo(si)); keysEl.appendChild(w);
     });
-    [0, 1, 3, 4, 5].forEach(i => { const b = document.createElement('div'); b.className = 'bk'; b.style.left = `${8 + 74 * (i + 1) - 21}px`; keysEl.appendChild(b); });
+    [[0, 1], [1, 3], [3, 6], [4, 8], [5, 10]].forEach(([after, si]) => {
+      const b = document.createElement('div'); b.className = 'bk'; b.dataset.i = si;
+      b.style.left = `${8 + 74 * (after + 1) - 21}px`;
+      b.addEventListener('pointerdown', e => { e.stopPropagation(); solo(si); }); keysEl.appendChild(b);
+    });
 
     function renderLanes() {
       const st = STYLES[S.style];
@@ -311,16 +343,19 @@
         let f = null;
         if (S.style === 'custom') f = S.custom[s];
         else if (s % 2 === 0) f = st.melody[(s >> 1) % st.melody.length];
-        h += `<div class="cell">${f ? `<div class="hit n"></div><span class="lbl">${NAME_BY_FREQ(f)}</span>` : ''}</div>`;
+        const rec = S.style === 'custom' && f;
+        h += `<div class="cell${rec ? ' rec' : ''}" ${rec ? `data-step="${s}" title="Tap to delete this note"` : ''}>${f ? `<div class="hit n"></div><span class="lbl">${NAME_BY_FREQ(f)}</span>` : ''}</div>`;
       }
       document.getElementById('lane-piano').innerHTML = h;
       // strings
       h = '<div class="cell" style="grid-column:1 / span 16"><div class="sustain"></div></div>';
       document.getElementById('lane-strings').innerHTML = h;
       document.getElementById('sub-piano').textContent = S.style === 'custom' ? 'Your recorded loop' : 'Style melody';
-      document.getElementById('rec-note').innerHTML = S.style === 'custom'
-        ? `<span class="rec-hint">● Recording into the Piano row</span><button class="ghostbtn" id="clear-loop">Clear loop</button>` : '';
-      const cl = document.getElementById('clear-loop'); if (cl) cl.onclick = () => { S.custom.fill(null); renderLanes(); };
+      const custom = S.style === 'custom', count = S.custom.filter(Boolean).length;
+      document.getElementById('recbar').classList.toggle('show', custom);
+      document.getElementById('rec-count').textContent = count ? `${count} note${count > 1 ? 's' : ''} in your loop · tap a note in the Piano row to delete it` : 'Press Play, then play keys — they are recorded into the Piano row';
+      document.getElementById('undo-btn').disabled = !S.history.length;
+      document.getElementById('clear-btn').disabled = !count;
     }
 
     function paintHead(step) {
@@ -401,8 +436,11 @@
       if (!AC) return;
       const f = SOLO[i][1];
       if (!(fromMidi && CasioMIDI.silent())) piano(AC.currentTime, f, .4);
-      const k = keysEl.querySelector(`.wk[data-i="${i}"]`); k.classList.add('on'); setTimeout(() => k.classList.remove('on'), 140);
-      if (S.style === 'custom' && S.playing) { S.custom[currentStep] = f; S.on.piano = true; syncTracks(); renderLanes(); }
+      const k = keysEl.querySelector(`[data-i="${i}"]`); if (k) { k.classList.add('on'); setTimeout(() => k.classList.remove('on'), 140); }
+      if (S.style === 'custom' && S.playing) {
+        S.history.push({ step: currentStep, prev: S.custom[currentStep] });
+        S.custom[currentStep] = f; S.on.piano = true; syncTracks(); renderLanes();
+      }
     }
 
     /* ---------- Input ---------- */
@@ -411,7 +449,8 @@
       if (e.repeat || !AC) return;
       const k = e.key.toLowerCase();
       const t = TRACKS.find(t => t.key === k); if (t) return toggle(t.id);
-      const n = '12345678'.indexOf(k); if (n >= 0 && k !== '') return solo(n);
+      const n = '12345678'.indexOf(k); if (n >= 0 && k.length === 1) return solo(WHITE_KEYS[n]);
+      if ((e.metaKey || e.ctrlKey) && k === 'z') { e.preventDefault(); return undo(); }
       if (e.code === 'Space') { e.preventDefault(); S.playing ? stop() : start(); }
     });
     document.getElementById('start').onclick = () => {
@@ -420,15 +459,27 @@
       start();
     };
 
-    // CASIO keyboard: C3 D3 E3 F3 → instruments on/off, white keys from G3 up → melody (C4…C5 = keys 1…8)
+    // ---------- Recording: undo / clear / tap to delete ----------
+    function undo() {
+      const h = S.history.pop(); if (!h) return;
+      S.custom[h.step] = h.prev; renderLanes();
+    }
+    document.getElementById('undo-btn').onclick = undo;
+    document.getElementById('clear-btn').onclick = () => { S.custom.fill(null); S.history.length = 0; renderLanes(); };
+    document.getElementById('lane-piano').addEventListener('click', e => {
+      const c = e.target.closest('.cell.rec'); if (!c) return;
+      e.stopPropagation();                            // don't switch the Piano track off
+      const st = +c.dataset.step; S.history.push({ step: st, prev: S.custom[st] });
+      S.custom[st] = null; renderLanes();
+    });
+
+    // CASIO keyboard: C3 D3 E3 F3 → instruments on/off; every key from G3 up (black keys too) → melody
     const TRACK_NOTES = { 48: 'drums', 50: 'bass', 52: 'piano', 53: 'strings' };
-    const WHITE_IDX = { 0: 0, 2: 1, 4: 2, 5: 3, 7: 4, 9: 5, 11: 6 };
     CasioMIDI.onNote(note => {
       if (!AC) return;                               // studio not started yet (browser needs one click for sound)
       if (TRACK_NOTES[note]) return toggle(TRACK_NOTES[note]);
       if (note < 55) return;
-      if (note % 12 === 0 && note > 60) return solo(7, true);
-      const i = WHITE_IDX[note % 12]; if (i !== undefined) solo(i, true);
+      solo(note % 12 === 0 && note > 60 ? 12 : note % 12, true);
     });
 
     setStyle('bollywood'); syncTracks(); updatePlayBtn();

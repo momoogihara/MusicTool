@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Score Sheet Test</title>
+<style>
+  :root { --ink: #111116; --muted: #777784; --line: #EAEAF0; --ok: #12A150; --ng: #E5383B; --wait: #F08C00; --soft: #F6F6F9; }
+  * { box-sizing: border-box; }
+  body { font: 16px -apple-system, "Helvetica Neue", "Segoe UI", sans-serif; margin: 0; padding: 20px 16px 40px; background: #fff; color: var(--ink); }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  p.sub { color: var(--muted); margin: 0 0 18px; line-height: 1.5; }
+  .card { border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+  .card h2 { font-size: 16px; margin: 0 0 10px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+  input, select { width: 100%; font: inherit; padding: 10px 12px; border: 1px solid #D6D6DE; border-radius: 10px; background: #fff; }
+  button { font: 600 15px inherit; font-family: inherit; padding: 11px 18px; border-radius: 999px; border: 1px solid #D6D6DE; background: #fff; cursor: pointer; }
+  button.main { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+  .st { font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+  .st.ok { background: #E3F6EA; color: var(--ok); } .st.ng { background: #FDE8E8; color: var(--ng); } .st.wait { background: #FFF1DC; color: var(--wait); } .st.idle { background: var(--soft); color: var(--muted); }
+  .msg { font-size: 14px; line-height: 1.5; color: #444; margin-top: 6px; }
+  .msg b { color: var(--ink); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+  td, th { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+  #log { background: var(--soft); border-radius: 10px; padding: 10px; font: 12px Menlo, monospace; max-height: 200px; overflow: auto; white-space: pre-wrap; word-break: break-all; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Score sheet — connection test</h1>
+  <p class="sub">Checks that this iPad can read the CASIO keyboard <b>and</b> share scores through the Google Sheet. Fill in the settings once, then press <b>Run all checks</b>.</p>
+
+  <div class="card">
+    <h2>⚙️ Settings <span class="st idle" id="s-set">not saved</span></h2>
+    <label for="device">This device</label>
+    <select id="device"><option>Booth-1</option><option>Booth-2</option><option>Booth-3</option><option>Office</option></select>
+    <label for="url">Web app URL (ends with /exec)</label>
+    <input id="url" type="url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <label for="key">Key (the KEY you set in Apps Script)</label>
+    <input id="key" type="password" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div class="row"><button class="main" id="save">💾 Save settings</button></div>
+    <div class="msg" id="m-set">Settings are kept on this iPad only.</div>
+  </div>
+
+  <div class="row" style="margin:0 0 14px"><button class="main" id="all">▶ Run all checks</button></div>
+
+  <div class="card"><h2>🎹 1. CASIO keyboard <span class="st wait" id="s1">checking…</span></h2><div class="msg" id="m1">Press any key on the keyboard.</div></div>
+  <div class="card"><h2>🌐 2. Reach the Google Sheet <span class="st idle" id="s2">—</span></h2><div class="msg" id="m2">Sends a small “ping”.</div></div>
+  <div class="card"><h2>📤 3. Send a test score <span class="st idle" id="s3">—</span></h2><div class="msg" id="m3">Adds one row marked <b>is_test = TRUE</b>. Test rows never appear in the real ranking.</div></div>
+  <div class="card"><h2>🏆 4. Read today’s ranking <span class="st idle" id="s4">—</span></h2><div class="msg" id="m4">Reads today’s test ranking (intermediate).</div><div id="rank"></div></div>
+  <div class="card"><h2>💾 5. Data stays after closing the app <span class="st idle" id="s5">—</span></h2><div class="msg" id="m5"></div>
+    <div class="row"><button id="stamp">Save a check mark now</button></div></div>
+
+  <div class="card"><h2>📝 Activity log (this iPad)</h2><div id="log"></div></div>
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const ST = { ok: '✓ OK', ng: '✕ Problem', wait: '… Checking', idle: '—' };
+  const set = (n, cls, html, label) => { $('s' + n).className = 'st ' + cls; $('s' + n).textContent = label || ST[cls]; if (html != null) $('m' + n).innerHTML = html; };
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  /* ---------- storage (wrapped: some in-app browsers block it) ---------- */
+  const store = {
+    get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+  };
+
+  /* ---------- operation log: JSON Lines, never contains the key ---------- */
+  const LOG_KEY = 'peekaboo.log';
+  function oplog(action, target, result, detail, ms) {
+    try {
+      const now = new Date();
+      const row = { ts_utc: now.toISOString(), ts_local: now.toLocaleString(), device: cfg().device, page: 'sheet-test', action, target, result, detail: detail || '', ms: ms || 0, ua: navigator.userAgent.slice(0, 80) };
+      const all = (store.get(LOG_KEY) || []).concat(JSON.stringify(row)).slice(-200);
+      store.set(LOG_KEY, all);
+      $('log').textContent = all.slice().reverse().slice(0, 30).join('\n');
+    } catch (e) { /* logging must never stop the test */ }
+  }
+  window.onerror = m => oplog('error', 'page', 'failed', String(m));
+
+  /* ---------- settings ---------- */
+  const CFG_KEY = 'peekaboo.settings';
+  const cfg = () => store.get(CFG_KEY) || { device: 'Booth-1', url: '', key: '' };
+  function loadSettings() {
+    const c = cfg(); $('device').value = c.device; $('url').value = c.url; $('key').value = c.key;
+    if (c.url && c.key) { $('s-set').className = 'st ok'; $('s-set').textContent = '✓ Saved'; }
+  }
+  $('save').onclick = () => {
+    const url = $('url').value.trim(), key = $('key').value.trim();
+    if (!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(url)) {
+      $('s-set').className = 'st ng'; $('s-set').textContent = '✕ Check URL';
+      $('m-set').innerHTML = 'The URL should start with <b>https://script.google.com/macros/s/</b> and end with <b>/exec</b>. Copy it again from Apps Script → Deploy → Manage deployments.';
+      return;
+    }
+    if (!key) { $('s-set').className = 'st ng'; $('s-set').textContent = '✕ Key missing'; $('m-set').textContent = 'Enter the KEY you set in Apps Script → Project Settings → Script properties.'; return; }
+    const ok = store.set(CFG_KEY, { device: $('device').value, url, key });
+    $('s-set').className = 'st ' + (ok ? 'ok' : 'ng'); $('s-set').textContent = ok ? '✓ Saved' : '✕ Not saved';
+    $('m-set').textContent = ok ? 'Saved on this iPad.' : 'This app blocked saving. Check 5 will tell you more.';
+    oplog('save_settings', 'settings', ok ? 'success' : 'failed', 'device ' + $('device').value);
+  };
+
+  /* ---------- network with timeout ---------- */
+  async function call(method, params, body) {
+    const c = cfg(); if (!c.url) throw new Error('NO_URL');
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 12000);
+    const url = c.url + (params ? '?' + new URLSearchParams(params) : '');
+    // no Content-Type header → sent as text/plain → no CORS preflight (Apps Script cannot answer one)
+    const opt = method === 'POST' ? { method, body: JSON.stringify(body), signal: ctl.signal } : { signal: ctl.signal };
+    try { const r = await fetch(url, opt); return await r.json(); }
+    finally { clearTimeout(timer); }
+  }
+  function netHelp(e) {
+    if (e.message === 'NO_URL') return 'Save the <b>Web app URL</b> in Settings first.';
+    if (e.name === 'AbortError') return 'No answer in 12 seconds. Check the Wi-Fi, then try again.';
+    return 'Could not reach Google. Check: ① Wi-Fi is on ② the venue network does not block Google ③ in Apps Script, “Who has access” is <b>Anyone</b>.<br><small>' + esc(e.message) + '</small>';
+  }
+
+  /* ---------- 2. ping ---------- */
+  async function check2() {
+    set(2, 'wait', 'Contacting Google…'); const t0 = performance.now();
+    try {
+      const r = await call('GET', { action: 'ping' });
+      const ms = Math.round(performance.now() - t0);
+      if (!r.ok) throw new Error('unexpected answer');
+      set(2, 'ok', `Connected in <b>${ms} ms</b>.`); oplog('ping', 'sheet', 'success', '', ms); return true;
+    } catch (e) { set(2, 'ng', netHelp(e)); oplog('ping', 'sheet', 'failed', e.message, Math.round(performance.now() - t0)); return false; }
+  }
+
+  /* ---------- 3. send test score ---------- */
+  async function check3() {
+    set(3, 'wait', 'Sending…'); const t0 = performance.now(); const c = cfg();
+    const play = { key: c.key, id: (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random()), device: c.device,
+      nickname: 'TEST-' + c.device.slice(-1), level: 'intermediate', score: 500 + Math.floor(Math.random() * 1500), rankLetter: 'B',
+      cleared: 5, maxCombo: 3, accuracy: 80, input: 'test', userAgent: navigator.userAgent.slice(0, 120), isTest: true };
+    try {
+      const r = await call('POST', null, play);
+      const ms = Math.round(performance.now() - t0);
+      if (!r.ok) {
+        const why = r.error === 'wrong key' ? 'The <b>key</b> does not match. Check Settings and the KEY in Apps Script.' : 'The sheet refused it: ' + esc(r.error);
+        set(3, 'ng', why); oplog('send_score', play.nickname, 'failed', r.error, ms); return false;
+      }
+      set(3, 'ok', `Saved <b>${play.nickname}</b> · ${play.score} pts → <b>rank ${r.rank} of ${r.total}</b> (test ranking) · ${ms} ms`);
+      oplog('send_score', play.nickname, 'success', 'score ' + play.score + ' rank ' + r.rank, ms); return true;
+    } catch (e) { set(3, 'ng', netHelp(e)); oplog('send_score', play.nickname, 'failed', e.message, Math.round(performance.now() - t0)); return false; }
+  }
+
+  /* ---------- 4. ranking ---------- */
+  async function check4() {
+    set(4, 'wait', 'Reading…'); const t0 = performance.now();
+    try {
+      const r = await call('GET', { action: 'ranking', level: 'intermediate', test: '1', limit: '10' });
+      const ms = Math.round(performance.now() - t0);
+      if (!r.ok) throw new Error(r.error);
+      set(4, 'ok', `${r.total} player(s) today · ${ms} ms. Run this on the other iPad too — both should show the same list.`);
+      $('rank').innerHTML = r.top.length ? '<table><tr><th>#</th><th>Nickname</th><th>Score</th><th>Device</th><th>Time</th></tr>' +
+        r.top.map((p, i) => `<tr><td>${i + 1}</td><td>${esc(p.nickname)}</td><td>${p.score}</td><td>${esc(p.device)}</td><td>${esc(p.time)}</td></tr>`).join('') + '</table>' : '';
+      oplog('read_ranking', 'intermediate', 'success', r.total + ' players', ms); return true;
+    } catch (e) { set(4, 'ng', netHelp(e)); oplog('read_ranking', 'intermediate', 'failed', e.message, Math.round(performance.now() - t0)); return false; }
+  }
+
+  /* ---------- 5. storage survives closing the app ---------- */
+  const STAMP_KEY = 'peekaboo.stamp';
+  function check5() {
+    const s = store.get(STAMP_KEY);
+    if (s) set(5, 'ok', `Found the check mark saved at <b>${esc(s)}</b>. Saved data survives closing the app.`);
+    else set(5, 'idle', 'Press <b>Save a check mark now</b>, then <b>fully close the Web MIDI Browser app</b> (swipe it away), open it again and reload this page.', 'Not tested yet');
+  }
+  $('stamp').onclick = () => {
+    const ok = store.set(STAMP_KEY, new Date().toLocaleString());
+    if (!ok) { set(5, 'ng', 'This app does not allow saving data. Scores will still be sent to the sheet, but cannot be kept offline.'); oplog('stamp', 'storage', 'failed'); return; }
+    set(5, 'wait', 'Saved. Now fully close the app, reopen it and reload this page.', 'Close & reopen'); oplog('stamp', 'storage', 'success');
+  };
+
+  $('all').onclick = async () => { oplog('run_all', 'checks', 'start'); if (await check2()) { await check3(); await check4(); } check5(); };
+
+  /* ---------- 1. CASIO keyboard (same approach as midi-test.html) ---------- */
+  const NOTE = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  function inputsOf(a) {
+    let ins = a.inputs; const out = [];
+    if (typeof ins === 'function') { try { ins = ins.call(a); } catch (e) { ins = null; } }
+    if (!ins) return out;
+    if (Array.isArray(ins)) return ins.slice();
+    if (typeof ins.forEach === 'function') { ins.forEach(v => out.push(v)); return out; }
+    if (typeof ins.values === 'function') { const it = ins.values(); for (let r = it.next(); !r.done; r = it.next()) out.push(r.value); }
+    return out;
+  }
+  let keys = 0, midiLogged = false;
+  function onAccess(a) {
+    const scan = () => {
+      const ins = inputsOf(a);
+      if (!ins.length && !keys) set(1, 'wait', 'No keyboard found yet. Check the USB cable and that the keyboard is on.', '… Waiting');
+      else if (!keys) set(1, 'wait', `Found: <b>${esc(ins.map(i => i && i.name || 'keyboard').join(', '))}</b>. Now press a key.`, '… Press a key');
+      ins.forEach(inp => {
+        if (!inp || inp.__t) return; inp.__t = true;
+        inp.onmidimessage = e => {
+          const d = e && e.data ? e.data : e; if (!d || d.length < 3) return;
+          if ((d[0] & 0xf0) !== 0x90 || d[2] === 0) return;
+          keys++;
+          set(1, 'ok', `Last key: <b>${NOTE[d[1] % 12]}${Math.floor(d[1] / 12) - 1}</b> · strength ${d[2]} · ${keys} key press(es).`);
+          if (!midiLogged) { midiLogged = true; oplog('midi_key', 'keyboard', 'success', 'first note ' + d[1]); }
+        };
+      });
+    };
+    scan(); setInterval(scan, 2000);
+    try { a.onstatechange = scan; } catch (e) {}
+  }
+  (function poll(tries) {
+    if (navigator.requestMIDIAccess) {
+      let done = false; const ok = a => { if (!done) { done = true; onAccess(a); } };
+      const ng = () => { set(1, 'ng', 'Keyboard access was refused. Open this page in the <b>Web MIDI Browser</b> app and allow MIDI.'); oplog('midi_access', 'keyboard', 'failed'); };
+      try { const p = navigator.requestMIDIAccess({ sysex: false }, ok, ng); if (p && p.then) p.then(ok, ng); } catch (e) { ng(); }
+      setTimeout(() => { if (!done) set(1, 'ng', 'No answer to the keyboard request after 10 seconds. Reload the page; if it stays, open it in the <b>Web MIDI Browser</b> app.'); }, 10000);
+      return;
+    }
+    if (tries < 40) return setTimeout(() => poll(tries + 1), 250);   // Web MIDI Browser may add MIDI late
+    set(1, 'ng', 'This browser cannot read keyboards. Open this page in the <b>Web MIDI Browser</b> app.');
+    oplog('midi_support', 'keyboard', 'failed');
+  })(0);
+
+  loadSettings(); check5();
+  $('log').textContent = (store.get(LOG_KEY) || []).slice().reverse().slice(0, 30).join('\n');
+</script>
+</body>
+</html>
