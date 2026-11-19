@@ -19,6 +19,7 @@
     .grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; }
     .card { grid-column: span 2; display: flex; flex-direction: column; text-decoration: none; color: inherit; background: #fff; border: 1px solid var(--line); border-radius: 22px; overflow: hidden; transition: transform .18s ease, box-shadow .18s ease; }
     .card.wide { grid-column: span 3; }
+    .card.full { grid-column: 1 / -1; }
     .card:hover, .card:active { transform: translateY(-3px); box-shadow: 0 24px 40px -28px rgba(17,17,22,.35); }
     .art { height: 170px; display: grid; place-items: center; position: relative; overflow: hidden; }
     .art svg { width: 100%; height: 100%; display: block; }
@@ -77,6 +78,16 @@
           <h2>30 Sec Pianist</h2>
           <p>Read the score and play a whole song before the 30-second timer runs out.</p>
           <div class="inputs"><span>CASIO keyboard</span><span>PC keys</span><span>Touch</span></div>
+        </div>
+      </a>
+
+      <a class="card full" href="ForKids_AnimalPeekaboo.html">
+        <div class="art" style="background:#FFF8E8" id="art-peekaboo"></div>
+        <div class="body">
+          <div class="row"><span class="level" style="background:#FFE9B8;color:#B26A00">GAME · ALL LEVELS</span><span class="num">06</span></div>
+          <h2>Animal Peekaboo</h2>
+          <p>An animal sings a little tune — play it back! 30-second game with Beginner, Intermediate and Advanced levels and a live ranking for today.</p>
+          <div class="inputs"><span>CASIO keyboard</span><span>PC keys</span><span>Touch</span><span>Ranking</span></div>
         </div>
       </a>
 
@@ -472,6 +483,19 @@
       img('RABBIT', 92, 92, 86) + img('LION', 180, 84, 112) + img('PANDA', 268, 92, 86) +
       [[60,40,'#FF5A5F'],[300,36,'#2FA4E7'],[136,30,'#F5C02E'],[230,140,'#8CCB3A'],[40,128,'#B05CEB'],[318,130,'#FF7F3F']]
         .map(([x,y,c]) => `<circle cx="${x}" cy="${y}" r="5" fill="${c}"/>`).join(''));
+
+    // Animal Peekaboo: a fox peeks out and sings note bubbles
+    (() => {
+      const cols = { C: '#FF5A5F', E: '#8CCB3A', G: '#2FA4E7', A: '#7B61FF' };
+      let s = `<rect x="0" y="118" width="360" height="52" fill="#FFE9B8"/>` + img('FOX', 96, 104, 104);
+      ['C', 'E', 'G', 'A'].forEach((n, i) => {
+        const x = 170 + i * 44, y = 70 - (i === 2 ? 10 : 0);
+        s += `<rect x="${x - 17}" y="${y - 17}" width="34" height="34" rx="9" fill="${i === 2 ? cols[n] : '#fff'}" stroke="${cols[n]}" stroke-width="2.5"/>`;
+        s += `<text x="${x}" y="${y + 6}" text-anchor="middle" font-size="16" font-weight="700" font-family="Fredoka, Inter, sans-serif" fill="${i === 2 ? '#fff' : cols[n]}">${n}</text>`;
+      });
+      s += `<text x="336" y="150" text-anchor="end" font-size="22" font-weight="800" font-family="Inter, sans-serif" fill="#B26A00">0:30</text>`;
+      document.getElementById('art-peekaboo').innerHTML = svg(s);
+    })();
 
     (() => {
       let s = ''; const top = 52, sp = 14;
