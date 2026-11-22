@@ -112,7 +112,8 @@
     .bub.ok { border-color: var(--ok); } .bub.ok .nt { color: var(--ok); }
     .bub.ng { border-color: var(--ng); animation: shake .35s; } .bub.ng .nt { color: var(--ng); }
     @keyframes shake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-    .ctrl { display: flex; justify-content: center; min-height: 40px; }
+    .ctrl { display: flex; justify-content: center; gap: 10px; min-height: 40px; }
+    .ctrl #quit { color: var(--muted); }
     .ctrl button { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px; padding: 8px 16px; font: 600 .9rem 'Inter', sans-serif; }
     .ctrl button:disabled { opacity: .35; }
     .float { position: absolute; font: 700 2rem 'Fredoka', sans-serif; color: var(--ok); pointer-events: none; animation: up 1s ease-out forwards; }
@@ -222,7 +223,7 @@
       <div class="caption fun" id="caption"></div>
       <div class="bubbles" id="bubbles"></div>
     </div>
-    <div class="ctrl"><button id="replay">🔁 Listen again</button></div>
+    <div class="ctrl"><button id="replay">🔁 Listen again</button><button id="quit">✕ Quit</button></div>
     <div class="kb" id="kb"></div>
   </main>
 
@@ -625,10 +626,10 @@
     /* ---------- Toast & confirm ---------- */
     let toastT = 0;
     function toast(msg, ms = 2600) { const t = $('toast'); t.textContent = msg; t.classList.remove('hidden'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.add('hidden'), ms); }
-    function confirmBox(title, text, yes, onYes) {
-      $('c-title').textContent = title; $('c-text').textContent = text; $('c-yes').textContent = yes; $('confirm').classList.remove('hidden');
+    function confirmBox(title, text, yes, onYes, onNo, no = 'Cancel') {
+      $('c-title').textContent = title; $('c-text').textContent = text; $('c-yes').textContent = yes; $('c-no').textContent = no; $('confirm').classList.remove('hidden');
       $('c-yes').onclick = () => { $('confirm').classList.add('hidden'); onYes(); };
-      $('c-no').onclick = () => $('confirm').classList.add('hidden');
+      $('c-no').onclick = () => { $('confirm').classList.add('hidden'); if (onNo) onNo(); };
     }
 
     /* ---------- Confetti (canvas only runs while pieces are flying) ---------- */
@@ -776,7 +777,7 @@
       audio();
       const L = LEVELS[pref.level];
       Object.assign(G, { on: true, L, levelId: pref.level, nick, time: GAME_SECONDS, score: 0, combo: 0, maxCombo: 0, cleared: 0, tune: 0,
-        hits: 0, presses: 0, stage: 0, hidden: false, main: 0, reserve: 0, met: new Set(), songs: [], inputs: {}, phase: 'count', startedAt: Date.now() });
+        hits: 0, presses: 0, stage: 0, paused: false, hidden: false, main: 0, reserve: 0, met: new Set(), songs: [], inputs: {}, phase: 'count', startedAt: Date.now() });
       document.body.classList.toggle('dark', L.dark);
       buildKeyboard(L);
       show('game');
@@ -855,7 +856,7 @@
 
     // every key press from touch, PC keys or the CASIO keyboard lands here
     function press(pc, src, oct) {
-      if (!G.on || G.phase !== 'play') return;
+      if (!G.on || G.paused || G.phase !== 'play') return;
       if (G.L.whiteOnly && isBlack(pc)) return;      // beginners: black keys are simply ignored, never a miss
       G.inputs[src] = (G.inputs[src] || 0) + 1;
       if (!(src === 'midi' && CasioMIDI.silent())) playTone(audio(), [freq(pc, oct || 4)], { dur: .5, vol: .07 });
@@ -916,7 +917,7 @@
     let lastT = performance.now();
     function loop(now) {
       const dt = Math.min(.1, (now - lastT) / 1000); lastT = now;
-      if (G.on && G.phase === 'play') {
+      if (G.on && !G.paused && G.phase === 'play') {
         G.time -= dt; G.idle += dt;
         if (G.L.hintAfter && G.idle > G.L.hintAfter && !$('kb').querySelector('.hint')) setHint(G.q.steps[G.i]);
         updateHud();
@@ -967,6 +968,15 @@
         you.textContent = `🏆 You are #${me} of ${list.length} on this device today` + (cfg().url ? ' · score saved, it will be sent when the internet is back' : '');
       }
     }
+    // Quit: the clock stops while the question is open; quitting saves nothing (no score, no ranking) — only the log line
+    $('quit').onclick = () => {
+      if (!G.on || G.paused) return;
+      G.paused = true;
+      confirmBox('Stop this game?', 'Your score will not be saved and will not appear in the ranking.', '✕ Stop game', () => {
+        oplog('quit_game', G.levelId, 'success', `${G.nick} quit at ${G.score} pts, ${G.cleared} tunes, ${Math.max(0, G.time).toFixed(1)} s left`, Date.now() - G.startedAt);
+        G.paused = false; setHint(null); goHome();
+      }, () => { G.paused = false; lastT = performance.now(); }, '▶ Keep playing');
+    };
     $('again').onclick = () => { $('nick').value = pref.nick; startGame(); };
     $('home-btn').onclick = goHome;
     function goHome() { G.on = false; document.body.classList.remove('dark'); show('home'); $('nick').value = pref.nick; renderRecent(); rankLevel = pref.level; renderTabs(); startRankRefresh(); }

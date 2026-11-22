@@ -180,6 +180,9 @@
     body.animal .white .ani { display: block; }
     .btn.ghost { background: #fff; color: var(--ink); border: 1px solid var(--line); }
     .btn.ghost:hover { background: var(--surface); color: var(--ink); }
+    .quit { display: none; align-self: center; font: 600 .82rem 'Inter', sans-serif; color: var(--muted); background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; cursor: pointer; }
+    body.playing .quit { display: inline-block; }
+    .btn.danger { background: #D63B3B; }
     .card.select { width: min(860px, 94vw); padding: 36px 36px 32px; }
     .levels { display: flex; gap: 6px; justify-content: center; margin-top: 22px; background: var(--surface); border-radius: 999px; padding: 4px; width: fit-content; margin-left: auto; margin-right: auto; }
     .lv { font: 600 .85rem 'Inter', sans-serif; border: 0; background: none; color: var(--ink); padding: 8px 16px; border-radius: 999px; cursor: pointer; }
@@ -247,6 +250,7 @@
     .you { margin-top: 16px; font-weight: 700; padding: 12px; border-radius: 14px; background: #FFF4D6; color: #7A5200; }
     .you.wait { background: var(--surface); color: var(--muted); }
     #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 70; background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 14px; font-size: .9rem; max-width: calc(100% - 32px); }
+    @media (max-width: 600px) { .topbar { flex-wrap: wrap; gap: 10px; } .stats { flex-wrap: wrap; gap: 14px; justify-content: flex-end; } }
     @media (max-width: 900px) { .start-wrap { grid-template-columns: 1fr; } .board { position: static; } }
     @media (max-width: 520px) { .start-wrap .levels { flex-wrap: wrap; border-radius: 16px; } .result-grid { grid-template-columns: 1fr 1fr 1fr; } .card { padding: 28px 18px 24px; } }
 
@@ -274,6 +278,7 @@
         <div class="stat"><div class="label">NOTES</div><div class="value" id="stat-notes">0 / 25</div></div>
         <div class="stat"><div class="label">MISSES</div><div class="value" id="stat-miss">0</div></div>
         <div class="stat"><div class="label">SCORE</div><div class="value" id="stat-score">0</div></div>
+        <button class="quit" id="quit-btn">✕ Quit</button>
         <div class="stat timer" id="timer-box"><div class="label">TIME LEFT</div><div class="value" id="timer">40.0</div></div>
       </div>
     </div>
@@ -342,6 +347,18 @@
 
   <!-- Countdown -->
   <div class="overlay hidden" id="count-screen"><div id="count-num">3</div></div>
+
+  <!-- Quit confirm -->
+  <div class="overlay hidden" id="quit-screen" style="z-index:60">
+    <div class="card">
+      <h2 style="font-size:1.6rem">Stop this game?</h2>
+      <p>Your score will not be saved and will not appear in the ranking.</p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="btn danger" id="quit-yes">✕ Stop game</button>
+        <button class="btn ghost" id="quit-no">▶ Keep playing</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Result -->
   <div class="overlay hidden" id="result-screen">
@@ -989,7 +1006,7 @@
        every one of its notes has been pressed, in any order. A note counts if its
        note name matches (any octave), and each key can only count once per event. */
     let ev = 0, done = new Set(), usedKeys = new Set(), noteColor = [];
-    let timeLeft = TIME_LIMIT, timer = null, playing = false, misses = 0, missedThisEvent = false, played = 0;
+    let timeLeft = TIME_LIMIT, timer = null, playing = false, paused = false, pausedAt = 0, t0 = 0, misses = 0, missedThisEvent = false, played = 0;
     let combo = 0, maxCombo = 0, inputs = {}, startedAt = 0;   // for the ranking record
     const timerEl = document.getElementById('timer'), timerBox = document.getElementById('timer-box');
     const bar = document.getElementById('progress-bar'), progress = document.getElementById('progress');
@@ -1027,6 +1044,7 @@
       const quiet = fromMidi && CasioMIDI.silent();
       if (!quiet && AC.state !== 'running') AC.resume();
       if (!playing) { if (!quiet) playNote(m); return; }
+      if (paused) return;                                // quit question is open
       const e = CUR.events[ev];
       if (usedKeys.has(m)) return;                       // the same key again inside one chord: ignore
       const open = e.notes.filter(n => !done.has(n.id));
@@ -1076,17 +1094,18 @@
       }, 650);
     }
     function startGame() {
-      playing = true; showTarget();
-      const t0 = performance.now(); startedAt = Date.now();
+      playing = true; paused = false; document.body.classList.add('playing'); showTarget();
+      t0 = performance.now(); startedAt = Date.now();
       oplog('start_game', LEVEL, 'success', `${NICK} · ${CUR.id}`);
       timer = setInterval(() => {
+        if (paused) return;
         timeLeft = TIME_LIMIT - (performance.now() - t0) / 1000;
         updateHUD();
         if (timeLeft <= 0) endGame(false);
       }, 50);
     }
     function endGame(success) {
-      playing = false; clearInterval(timer); clearNext();
+      playing = false; document.body.classList.remove('playing'); clearInterval(timer); clearNext();
       const used = Math.min(TIME_LIMIT, TIME_LIMIT - timeLeft);
       const acc = played + misses ? Math.round(played / (played + misses) * 100) : 0;
       document.getElementById('result-eyebrow').textContent = success ? 'SONG COMPLETE' : 'TIME OVER';
@@ -1103,6 +1122,20 @@
       setTimeout(() => { document.getElementById('result-screen').classList.remove('hidden'); resultAt = performance.now(); }, 350);
       saveAndRank(success, sc, acc);
     }
+
+    // Quit: the clock stops while the question is open; quitting saves nothing (no score, no ranking) — only the log line
+    function askQuit() { if (!playing || paused) return; paused = true; pausedAt = performance.now(); $('quit-screen').classList.remove('hidden'); }
+    function keepPlaying() { $('quit-screen').classList.add('hidden'); t0 += performance.now() - pausedAt; paused = false; }
+    function quitGame() {
+      oplog('quit_game', LEVEL, 'success', `${NICK} · ${CUR.id} quit at ${played}/${CUR.allNotes.length} notes, ${Math.max(0, timeLeft).toFixed(1)} s left`, Date.now() - startedAt);
+      playing = false; paused = false; document.body.classList.remove('playing'); clearInterval(timer); clearNext();
+      $('quit-screen').classList.add('hidden'); reset();
+      $('start-screen').classList.remove('hidden');
+      $('nick').value = NICK; renderRecent(); rankLevel = LEVEL; renderTabs(); startRankRefresh();
+    }
+    document.getElementById('quit-btn').addEventListener('click', askQuit);
+    document.getElementById('quit-yes').addEventListener('click', quitGame);
+    document.getElementById('quit-no').addEventListener('click', keepPlaying);
 
     window.addEventListener('keydown', e => {
       if (e.repeat || e.target.tagName === 'INPUT') return;   // typing a nickname must not play notes
