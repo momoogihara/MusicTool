@@ -402,7 +402,7 @@
           .cm-btn .muted{color:#8A8A96;font-weight:500}`;
         document.head.appendChild(css);
         const bar = document.createElement('div'); bar.className = 'cm-bar' + (onMenu ? ' float' : '');
-        if (!onMenu) { const menu = document.createElement('a'); menu.href = 'index.html'; menu.className = 'cm-btn'; menu.textContent = '← Menu'; bar.appendChild(menu); }
+        if (!onMenu) { const menu = document.createElement('a'); menu.href = 'index.html#explore'; menu.className = 'cm-btn'; menu.textContent = '← Menu'; bar.appendChild(menu); }
         else bar.appendChild(document.createElement('span'));
         const b = document.createElement('button'); b.className = 'cm-btn'; b.style.display = 'none';
         b.title = 'Tap to switch the page sound on/off';

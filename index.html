@@ -36,19 +36,98 @@
     footer { display: flex; justify-content: space-between; align-items: center; margin-top: 26px; font-size: .8rem; color: var(--muted); }
     footer a { color: var(--ink); font-weight: 600; text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; }
 
-    @media (max-width: 900px) { .grid { grid-template-columns: 1fr 1fr; } .card, .card.wide { grid-column: span 1; } header { flex-direction: column; align-items: flex-start; } .lead { text-align: left; } }
+    /* views: #home / #games / #explore (hash keeps the browser Back button working) */
+    .hidden { display: none !important; }
+    .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .card.mode { grid-column: auto; }
+    .card.mode .art { height: 220px; }
+    .card.mode h2 { font-size: 1.9rem; }
+    .card.mode p { font-size: .98rem; }
+    .go { margin-top: 10px; align-self: flex-start; font-weight: 700; font-size: .95rem; color: #fff; background: var(--ink); border-radius: 999px; padding: 11px 20px; }
+    .back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 18px; font-weight: 600; font-size: .9rem; color: var(--ink); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; }
+    .back:hover { background: var(--surface); }
+
+    @media (max-width: 900px) { .modes { grid-template-columns: 1fr; } .grid { grid-template-columns: 1fr 1fr; } .card, .card.wide { grid-column: span 1; } header { flex-direction: column; align-items: flex-start; } .lead { text-align: left; } }
     @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <header>
-      <div>
-        <div class="eyebrow">CASIO · INTERACTIVE MUSIC STUDIO</div>
-        <h1>Pick an experience</h1>
+    <!-- ===== Home: choose a mode ===== -->
+    <section class="view" id="v-home">
+      <header>
+        <div>
+          <div class="eyebrow">CASIO · INTERACTIVE MUSIC STUDIO</div>
+          <h1>What would you like to do?</h1>
+        </div>
+        <div class="lead">Play with a CASIO keyboard, your voice or a tap on the screen. Choose one to start.</div>
+      </header>
+      <div class="modes">
+        <a class="card mode" href="#games">
+          <div class="art" style="background:#FFF8E8" id="art-mode-game"></div>
+          <div class="body">
+            <div class="row"><span class="level" style="background:#FFE9B8;color:#B26A00">🎮 SCORE · TIMER · RANKING</span></div>
+            <h2>Game Zone</h2>
+            <p>Beat the clock, get points and try for today’s ranking. Pick your level: Beginner, Intermediate or Advanced.</p>
+            <div class="inputs"><span>2 games</span><span>Beginner · Intermediate · Advanced</span></div>
+            <span class="go">Play a game →</span>
+          </div>
+        </a>
+        <a class="card mode" href="#explore">
+          <div class="art" style="background:#EEF6FF" id="art-mode-lab"></div>
+          <div class="body">
+            <div class="row"><span class="level" style="background:#D9EBFF;color:#1F78D1">🎨 NO SCORE · NO RUSH</span></div>
+            <h2>Music Lab</h2>
+            <p>Take your time: meet animal notes, turn your voice into a score, paint with sound or lead a band.</p>
+            <div class="inputs"><span>5 experiences</span><span>All ages</span></div>
+            <span class="go">Explore →</span>
+          </div>
+        </a>
       </div>
-      <div class="lead">Play with a CASIO keyboard, your voice or a tap on the screen. Use “← Menu” at the top to come back here.</div>
-    </header>
+    </section>
+
+    <!-- ===== Game Zone ===== -->
+    <section class="view hidden" id="v-games">
+      <a class="back" href="#home">← Home</a>
+      <header>
+        <div>
+          <div class="eyebrow">CASIO · GAME ZONE</div>
+          <h1>Pick a game</h1>
+        </div>
+        <div class="lead">Each game has Beginner, Intermediate and Advanced levels.</div>
+      </header>
+      <div class="grid">
+        <a class="card wide" href="ForKids_AnimalPeekaboo.html">
+          <div class="art" style="background:#FFF8E8" id="art-peekaboo"></div>
+          <div class="body">
+            <div class="row"><span class="level" style="background:#FFE9B8;color:#B26A00">GAME · ALL LEVELS</span><span class="num">G1</span></div>
+            <h2>Animal Peekaboo</h2>
+            <p>An animal sings a little tune — play it back! 30-second game with a live ranking for today.</p>
+            <div class="inputs"><span>CASIO keyboard</span><span>PC keys</span><span>Touch</span><span>Ranking</span></div>
+          </div>
+        </a>
+        <a class="card wide" href="PianoChallenge.html">
+          <div class="art" style="background:#F1F3FF" id="art-challenge"></div>
+          <div class="body">
+            <div class="row"><span class="level" style="background:#E0E6FF;color:#2546FF">GAME · ALL LEVELS</span><span class="num">G2</span></div>
+            <h2>Piano Challenge</h2>
+            <p>Read the score and play a whole song before time runs out — from Jingle Bells to Für Elise.</p>
+            <div class="inputs"><span>CASIO keyboard</span><span>PC keys</span><span>Touch</span><span>10 songs</span></div>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- ===== Music Lab (everything that is not a game) ===== -->
+    <section class="view hidden" id="v-explore">
+      <a class="back" href="#home">← Home</a>
+      <header>
+        <div>
+          <div class="eyebrow">CASIO · MUSIC LAB</div>
+          <h1>Pick an experience</h1>
+        </div>
+        <div class="lead">No score, no timer — just play. Use “← Menu” at the top of each page to come back here.</div>
+      </header>
 
     <div class="grid">
       <a class="card" href="ForBeginner_Animal.html">
@@ -81,16 +160,6 @@
         </div>
       </a>
 
-      <a class="card full" href="ForKids_AnimalPeekaboo.html">
-        <div class="art" style="background:#FFF8E8" id="art-peekaboo"></div>
-        <div class="body">
-          <div class="row"><span class="level" style="background:#FFE9B8;color:#B26A00">GAME · ALL LEVELS</span><span class="num">06</span></div>
-          <h2>Animal Peekaboo</h2>
-          <p>An animal sings a little tune — play it back! 30-second game with Beginner, Intermediate and Advanced levels and a live ranking for today.</p>
-          <div class="inputs"><span>CASIO keyboard</span><span>PC keys</span><span>Touch</span><span>Ranking</span></div>
-        </div>
-      </a>
-
       <a class="card wide" href="index_VisualizeWithkey.html">
         <div class="art" style="background:#FAFAFB" id="art-visual"></div>
         <div class="body">
@@ -112,6 +181,7 @@
         </div>
       </a>
     </div>
+    </section>
 
     <footer>
       <span>Best in Google Chrome (PC) or Web MIDI Browser (iPad).</span>
@@ -487,7 +557,7 @@
     // Animal Peekaboo: a fox peeks out and sings note bubbles
     (() => {
       const cols = { C: '#FF5A5F', E: '#8CCB3A', G: '#2FA4E7', A: '#7B61FF' };
-      let s = `<rect x="0" y="118" width="360" height="52" fill="#FFE9B8"/>` + img('FOX', 96, 104, 104);
+      let s = `<rect x="-400" y="118" width="1160" height="200" fill="#FFE9B8"/>` + img('FOX', 96, 104, 104);
       ['C', 'E', 'G', 'A'].forEach((n, i) => {
         const x = 170 + i * 44, y = 70 - (i === 2 ? 10 : 0);
         s += `<rect x="${x - 17}" y="${y - 17}" width="34" height="34" rx="9" fill="${i === 2 ? cols[n] : '#fff'}" stroke="${cols[n]}" stroke-width="2.5"/>`;
@@ -557,6 +627,45 @@
       });
       document.getElementById('art-orch').innerHTML = svg(s);
     })();
+
+    // Piano Challenge: a score with level stars and a countdown
+    (() => {
+      let s = ''; const top = 46, sp = 13;
+      for (let i = 0; i < 5; i++) s += `<line x1="24" x2="336" y1="${top + i * sp}" y2="${top + i * sp}" stroke="#C9CDE6" stroke-width="1.3"/>`;
+      s += `<text x="28" y="${top + sp * 3.2}" font-size="${sp * 5.2}" font-family="Noto Music, Apple Symbols, Segoe UI Symbol, serif" fill="#111116">&#x1D11E;</text>`;
+      [2, 1, 2, 0, 1, 3, 4, 3, 2, 1].forEach((d, i) => {
+        const x = 96 + i * 24, y = top + sp * 4 - (d + 1) * sp / 2, c = i < 4 ? '#12A150' : i === 4 ? '#2546FF' : '#111116';
+        s += `<ellipse cx="${x}" cy="${y}" rx="${sp * .6}" ry="${sp * .43}" transform="rotate(-20 ${x} ${y})" fill="${c}"/>`;
+        s += `<line x1="${x + sp * .56}" x2="${x + sp * .56}" y1="${y}" y2="${y - sp * 3}" stroke="${c}" stroke-width="1.5"/>`;
+      });
+      ['★', '★★', '★★★'].forEach((t, i) => s += `<text x="${40 + i * 70}" y="146" font-size="15" fill="${['#12A150', '#2546FF', '#E5383B'][i]}">${t}</text>`);
+      s += `<text x="336" y="146" text-anchor="end" font-size="22" font-weight="800" font-family="Inter, sans-serif" fill="#111116">0:40</text>`;
+      document.getElementById('art-challenge').innerHTML = svg(s);
+    })();
+
+    // Home: Game Zone (fox + trophy + timer) / Music Lab (animals + colour notes)
+    (() => {
+      let s = `<rect x="-400" y="128" width="1160" height="200" fill="#FFE9B8"/>` + img('FOX', 110, 104, 100);
+      s += `<text x="212" y="112" font-size="62" text-anchor="middle">🏆</text>`;
+      s += `<text x="318" y="78" text-anchor="end" font-size="30" font-weight="800" font-family="Inter, sans-serif" fill="#B26A00">0:30</text>`;
+      s += `<text x="318" y="108" text-anchor="end" font-size="13" font-weight="700" font-family="Inter, sans-serif" fill="#B26A00">#1 TODAY</text>`;
+      document.getElementById('art-mode-game').innerHTML = svg(s);
+      let t = img('RABBIT', 96, 96, 84) + img('PANDA', 264, 96, 84) + img('BIRD', 180, 80, 92);
+      [[50,40,0],[310,36,7],[136,28,3],[226,146,4],[40,134,9],[322,134,1],[150,150,11]]
+        .map(([x, y, c]) => t += `<circle cx="${x}" cy="${y}" r="6" fill="${PITCH_COLORS[c]}"/>`);
+      document.getElementById('art-mode-lab').innerHTML = svg(t);
+    })();
+
+    /* ---------- Views: #home / #games / #explore ----------
+       Hash links (not separate pages) so "← Menu" on each page can come back to the right list
+       and the browser / iPad back gesture still works. Unknown hash → home. */
+    function showView() {
+      const v = { '#games': 'v-games', '#explore': 'v-explore' }[location.hash] || 'v-home';
+      document.querySelectorAll('.view').forEach(el => el.classList.toggle('hidden', el.id !== v));
+      window.scrollTo(0, 0);
+    }
+    addEventListener('hashchange', showView);
+    showView();
   </script>
 </body>
 </html>
