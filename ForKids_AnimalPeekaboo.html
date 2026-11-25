@@ -144,6 +144,20 @@
     .rgrid .v { font: 700 1.3rem 'Fredoka', sans-serif; }
     .you { font: 700 1.25rem 'Fredoka', sans-serif; padding: 12px; border-radius: 14px; background: #FFF4D6; color: #7A5200; }
     .you.wait { background: var(--soft); color: var(--muted); }
+    /* Instagram (top 3 only, optional) */
+    .igbox { margin-top: 14px; text-align: left; border: 2px solid #2546FF; border-radius: 16px; padding: 14px 16px; background: rgba(37,70,255,.06); }
+    .igbox h4 { font: 700 1.1rem 'Fredoka', 'Inter', sans-serif; }
+    .igbox .ig-p { font-size: .86rem; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+    .ig-in { display: flex; align-items: center; margin-top: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); padding: 0 12px; }
+    .ig-in span { font-weight: 700; color: var(--muted); }
+    .ig-in input { flex: 1; border: 0; background: transparent; color: var(--ink); font: 1.05rem 'Inter', sans-serif; padding: 12px 6px; outline: none; min-width: 0; }
+    .ig-c { display: flex; gap: 10px; align-items: flex-start; font-size: .9rem; margin-top: 10px; line-height: 1.35; cursor: pointer; }
+    .ig-c input { width: 22px; height: 22px; flex: 0 0 22px; accent-color: #2546FF; margin-top: 1px; }
+    .ig-err { color: #E5383B; font-size: .85rem; min-height: 1.1em; margin-top: 8px; }
+    .ig-btns { display: flex; gap: 8px; margin-top: 6px; }
+    .ig-btns .btn { flex: 1; padding: 12px 10px; }
+    .igbox.done { border-color: #12A150; background: rgba(18,161,80,.08); text-align: center; }
+    .igbox.done h4 { color: #12A150; }
     .album { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 14px 0 4px; }
     .album > * { width: 44px; height: 44px; }
     .album .sil { --c: var(--line); }
@@ -240,6 +254,21 @@
         <div><div class="l">ACCURACY</div><div class="v" id="r-acc">0%</div></div>
       </div>
       <div class="you wait" id="r-you">Checking today’s ranking…</div>
+      <div class="igbox hidden" id="ig">
+        <div id="ig-form">
+          <h4>📸 Top 3! Get on CASIO's Instagram</h4>
+          <p class="ig-p">The #1 player is posted in CASIO's Story every hour. Optional — you can skip.</p>
+          <div class="ig-in"><span>@</span><input id="ig-id" maxlength="31" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="your Instagram ID"></div>
+          <label class="ig-c"><input type="checkbox" id="ig-agree"><span>It's OK for CASIO to post my nickname and score, and tag my Instagram.</span></label>
+          <label class="ig-c"><input type="checkbox" id="ig-adult"><span>I am 18 or older, or my parent says OK.</span></label>
+          <div class="ig-err" id="ig-err"></div>
+          <div class="ig-btns"><button class="btn" id="ig-save">Save</button><button class="btn sub" id="ig-skip">Skip</button></div>
+        </div>
+        <div id="ig-done" class="hidden">
+          <h4>✓ Thank you!</h4>
+          <p class="ig-p">If you are still at the top at the next check, CASIO will post you on Instagram 🎉</p>
+        </div>
+      </div>
       <div class="eyebrow" style="margin-top:16px" id="r-album-label">ANIMALS YOU MET</div>
       <div class="album" id="r-album"></div>
       <div class="song hidden" id="r-song"></div>
@@ -954,6 +983,7 @@
       if (G.songs.length) { songEl.classList.remove('hidden'); songEl.innerHTML = `🎵 You played <b>${G.songs.map(esc).join('</b> and <b>')}</b>!<br>Play the whole song in <a href="ForIntermidiate_Pianist.html">30 Sec Pianist →</a>`; }
       else songEl.classList.add('hidden');
       const you = $('r-you'); you.className = 'you wait'; you.textContent = 'Checking today’s ranking…';
+      igHide();
       show('result');
       if (G.score > 0) burst(innerWidth / 2, innerHeight * .3, PITCH_COLORS, 60);
 
@@ -961,7 +991,9 @@
       let r = null;
       for (let w = 0; flushing && w < 25; w++) await new Promise(ok => setTimeout(ok, 200));   // a background send may still be running
       if (cfg().url) r = await flushQueue(play.id);
-      if (r && r.ok) { you.className = 'you'; you.textContent = `🏆 You are #${r.rank} of ${r.total} today (${L.name})` + (r.best > play.score ? ` · your best is ${r.best.toLocaleString()}` : ''); }
+      if (r && r.ok) { you.className = 'you'; you.textContent = `🏆 You are #${r.rank} of ${r.total} today (${L.name})` + (r.best > play.score ? ` · your best is ${r.best.toLocaleString()}` : '');
+        // Instagram box: only top 3, and only when THIS play is the player's best (the ID is saved on this play's row)
+        if (G.score > 0 && r.rank >= 1 && r.rank <= 3 && !(r.best > play.score)) igShow(play); }
       else {
         const list = localRanking(G.levelId), me = list.findIndex(p => p.nickname === G.nick) + 1;
         you.className = 'you';
@@ -977,6 +1009,39 @@
         G.paused = false; setHint(null); goHome();
       }, () => { G.paused = false; lastT = performance.now(); }, '▶ Keep playing');
     };
+    /* ---------- Instagram (optional, top 3). The ID goes only to the sheet: never to this device's history, CSV or log. ---------- */
+    const IG = { playId: '', open: false };
+    function igHide() { IG.open = false; IG.playId = ''; $('ig').classList.add('hidden'); }
+    function igShow(play) {
+      IG.playId = play.id; IG.open = true;
+      $('ig-id').value = ''; $('ig-agree').checked = false; $('ig-adult').checked = false; $('ig-err').textContent = '';
+      $('ig-form').classList.remove('hidden'); $('ig-done').classList.add('hidden'); $('ig').classList.remove('done', 'hidden');
+      $('ig-save').disabled = false;
+      oplog('insta_offer', play.level, 'success', 'top 3');
+    }
+    $('ig-skip').onclick = () => { oplog('insta_skip', G.levelId, 'success'); igHide(); };
+    $('ig-save').onclick = async () => {
+      const id = $('ig-id').value.trim().replace(/^@+/, '');
+      if (!/^[A-Za-z0-9._]{1,30}$/.test(id)) { $('ig-err').textContent = 'Check your Instagram ID: only letters, numbers, "." and "_" (up to 30).'; return; }
+      if (!$('ig-agree').checked || !$('ig-adult').checked) { $('ig-err').textContent = 'Please tick both boxes to join, or tap Skip.'; return; }
+      $('ig-save').disabled = true; $('ig-err').textContent = 'Saving…';
+      const t0 = performance.now();
+      try {
+        const r = await api('POST', null, { key: cfg().key, device: cfg().device, action: 'insta', id: IG.playId, insta: id, agree: true, adult: true });
+        const ms = Math.round(performance.now() - t0);
+        if (r.ok) { oplog('insta_save', G.levelId, 'success', '', ms); IG.open = false; $('ig-form').classList.add('hidden'); $('ig-done').classList.remove('hidden'); $('ig').classList.add('done'); return; }
+        oplog('insta_save', G.levelId, 'failed', r.error, ms);
+        $('ig-err').textContent = r.error === 'nickname missing' ? 'Instagram is not ready yet. Please tell the staff (the score sheet needs the update).'
+          : r.error === 'wrong key' ? 'Could not save. Please tell the staff (the key is wrong).'
+          : r.error === 'bad instagram id' ? 'Check your Instagram ID and try again.' : 'Could not save. Please try again.';
+      } catch (e) {
+        oplog('insta_save', G.levelId, 'failed', e.name === 'AbortError' ? 'timeout' : e.message, Math.round(performance.now() - t0));
+        $('ig-err').textContent = 'No internet right now. Try again, or tap Skip.';
+      }
+      $('ig-save').disabled = false;
+    };
+    $('ig-id').addEventListener('keydown', e => { if (e.key === 'Enter') $('ig-save').click(); });
+
     $('again').onclick = () => { $('nick').value = pref.nick; startGame(); };
     $('home-btn').onclick = goHome;
     function goHome() { G.on = false; document.body.classList.remove('dark'); show('home'); $('nick').value = pref.nick; renderRecent(); rankLevel = pref.level; renderTabs(); startRankRefresh(); }
@@ -1038,7 +1103,7 @@
     CasioMIDI.onNote((m) => {
       const anyOverlay = !$('staff').classList.contains('hidden') || !$('confirm').classList.contains('hidden') || !$('count').classList.contains('hidden');
       if (G.on) { press(m % 12, 'midi', Math.floor(m / 12) - 1); return; }
-      if (anyOverlay) return;
+      if (anyOverlay || IG.open) return;   // typing the Instagram ID: a keyboard touch must not restart the game
       if (!$('home').classList.contains('hidden')) { startGame(); return; }
       // on the result screen wait 3 s, so a key still being played when time ran out does not restart at once
       if (!$('result').classList.contains('hidden') && performance.now() - (G.endAt || 0) > 3000) { $('nick').value = pref.nick; startGame(); }
