@@ -172,6 +172,8 @@
       transition: transform .15s ease, background .15s ease;
     }
     .btn:hover { transform: translateY(-2px); background: var(--accent); }
+    .btn:disabled, .btn:disabled:hover { background: #C9C9D2; color: #fff; border-color: #C9C9D2; transform: none; cursor: default; }
+    .lock-note { font-size: .82rem; color: var(--muted); margin-top: 8px !important; min-height: 1.2em; }
     .view { display: inline-flex; background: var(--surface); border-radius: 999px; padding: 3px; }
     .view button { font: 600 .75rem 'Inter', sans-serif; border: 0; background: none; color: var(--muted); padding: 6px 12px; border-radius: 999px; cursor: pointer; }
     .view button.on { background: #fff; color: var(--ink); box-shadow: 0 2px 6px rgba(0,0,0,.08); }
@@ -206,6 +208,28 @@
     .howto .lvt th, .howto .lvt td { text-align: left; padding: 7px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
     .howto .lvt th { font-size: .68rem; letter-spacing: .12em; color: var(--muted); }
     .howto .pts { margin-top: 10px; font-size: .84rem; color: var(--muted); background: var(--surface); border-radius: 12px; padding: 10px 12px; line-height: 1.5; }
+    /* portrait / small screens: the text may scroll, the "Got it" button stays visible at the bottom */
+    .howto > :last-child { position: sticky; bottom: -24px; background: #fff; padding: 4px 0 6px; margin-bottom: -6px; }
+    /* Tablet / PC landscape: picture on the left, text on the right, so everything (incl. the button) fits without scrolling */
+    @media (orientation: landscape) and (min-width: 820px) {
+      #howto { padding-top: calc(var(--bar, 0px) + 12px); }
+      #howto .howto { width: min(1040px, 96vw); max-height: calc(100vh - var(--bar, 0px) - 28px); max-height: calc(100dvh - var(--bar, 0px) - 28px);
+               display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); column-gap: 24px; align-content: start; padding: 22px 26px 20px; }
+      .howto > .eyebrow, .howto > h2, .howto > h3 { grid-column: 1 / -1; }
+      .howto > .shot { grid-column: 1; grid-row: 3 / span 3; margin: 12px 0 0; align-self: start; }
+      .howto > ol { grid-column: 2; grid-row: 3; margin-top: 10px; font-size: .92rem; line-height: 1.5; }
+      .howto > .lvt { grid-column: 2; grid-row: 4; margin-top: 6px; font-size: .8rem; }
+      .howto > .lvt th, .howto > .lvt td { padding: 5px 6px; }
+      .howto > .pts { grid-column: 2; grid-row: 5; margin-top: 8px; font-size: .8rem; padding: 8px 10px; }
+      .howto > :last-child { grid-column: 1 / -1; grid-row: 6; }
+      .howto > :last-child .btn { margin-top: 12px; }
+      .howto > h2 { font-size: 1.6rem; }
+    }
+    /* short landscape screens (browser bars take space): slightly smaller text so the button still shows */
+    @media (orientation: landscape) and (min-width: 820px) and (max-height: 720px) {
+      .howto > ol { font-size: .84rem; line-height: 1.4; } .howto > .lvt { font-size: .74rem; } .howto > .pts { font-size: .74rem; }
+      .howto > h2, .howto > h3 { font-size: 1.35rem; } .howto > :last-child .btn { margin-top: 8px; padding-top: 11px; padding-bottom: 11px; }
+    }
     /* Instagram (top 3 only, optional) — same box as Animal Peekaboo */
     .igbox { margin-top: 14px; text-align: left; border: 2px solid #2546FF; border-radius: 16px; padding: 14px 16px; background: rgba(37,70,255,.06); }
     .igbox h4 { font-size: 1.05rem; font-weight: 800; }
@@ -221,6 +245,25 @@
     .igbox.done { border-color: #12A150; background: rgba(18,161,80,.08); text-align: center; }
     .igbox.done h4 { color: #12A150; }
     #result-screen .card { max-height: 94vh; overflow-y: auto; }
+    /* Tablet landscape (iPad ~1024×700 inside Web MIDI Browser): tighter start screen so ▶ Start shows without scrolling */
+    @media (orientation: landscape) and (max-height: 860px) and (min-width: 820px) {
+      .start-wrap .card.select { padding: 18px 24px 16px; }
+      .start-wrap .card.select h2 { font-size: 1.6rem; }
+      .start-wrap .card.select > p { display: inline; margin-right: 8px; }
+      .howto-btn { margin-top: 6px; padding: 5px 12px; }
+      .step { margin: 9px 0 5px; }
+      #level-note { margin-top: 6px !important; }
+      .song { padding: 9px 12px; } .song .pre { display: none; } .song .nm { margin-top: 3px; } .song .meta { margin-top: 3px; }
+      .start-row { margin-top: 12px; }
+      .foot-link { margin-top: 8px; }
+      .err:empty { min-height: 0; margin: 0; } .chips { margin-top: 6px; }
+      .song .nm { font-size: .95rem; } .song .meta { font-size: .68rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      /* result: Instagram box on the right, score + buttons on the left */
+      #result-screen .card.with-ig { width: min(940px, 96vw); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .9fr); column-gap: 22px; align-items: start; padding: 26px 26px 22px; }
+      #result-screen .card.with-ig > * { grid-column: 1; }
+      #result-screen .card.with-ig > #ig { grid-column: 2; grid-row: 1 / span 20; margin-top: 0; align-self: center; }
+      #result-screen .card.with-ig #result-sub { display: none; }
+    }
     .foot-link { display: block; margin-top: 14px; font-size: .8rem; color: var(--muted); text-align: right; }
     .btn.danger { background: #D63B3B; }
     .card.select { width: min(860px, 94vw); padding: 36px 36px 32px; }
@@ -367,12 +410,12 @@
       <p id="level-note" style="display:none;font-size:.85rem;margin-top:10px"></p>
       <div class="step"><b>3</b>CHOOSE A SONG</div>
       <div class="songs" id="songs"></div>
-      <div style="margin-top:14px;display:flex;align-items:center;gap:10px;font-size:.82rem;color:var(--muted)">
-        Show the music as
-        <div class="view" data-view><button data-mode="animal">🐾 Animals</button><button data-mode="notes" class="on">🎵 Notes</button></div>
-      </div>
       <div class="start-row">
         <button class="btn" id="start-btn">▶ Start</button>
+        <div style="display:flex;align-items:center;gap:10px;font-size:.82rem;color:var(--muted);margin-left:auto">
+          Show the music as
+          <div class="view" data-view><button data-mode="animal">🐾 Animals</button><button data-mode="notes" class="on">🎵 Notes</button></div>
+        </div>
       </div>
       <a class="foot-link" href="index.html#staff">⚙ Staff settings (Game Zone) · <span id="device-label"></span></a>
     </div>
@@ -462,7 +505,7 @@
         <button class="btn" id="retry-btn">Try again</button>
         <button class="btn ghost" id="choose-btn">Change song / player</button>
       </div>
-
+      <p class="lock-note" id="r-lock"></p>
     </div>
   </div>
 
@@ -1268,7 +1311,7 @@
         const b = document.createElement('button'); b.className = 'song'; b.dataset.id = sg.id;
         b.innerHTML = `<div class="stars">${'★'.repeat(sg.stars)}<i>${'★'.repeat(3 - sg.stars)}</i></div>
           <div class="nm">${sg.title}</div>
-          <div class="meta">${sg.bars} bars · ${sg.sig[0]}/${sg.sig[1]} · ${sg.allNotes.length} notes · ${sg.time} sec</div>
+          <div class="meta">${sg.bars} bars · ${sg.allNotes.length} notes · ${sg.time === 60 ? "1 min" : sg.time + " sec"}</div>
           <div class="pre">${sg.twoHands ? 'Both hands' : sg.allNotes.slice(0, 6).map(n => n.label).join(' ') + ' …'}</div>`;
         b.onclick = () => selectSong(sg.id);
         songsEl.appendChild(b);
@@ -1469,8 +1512,16 @@
       const you = $('r-you'), Lname = LEVELS[LEVEL].label;
       igHide();
       you.className = 'you wait'; you.textContent = 'Checking today’s ranking…';
-      for (let w = 0; flushing && w < 25; w++) await new Promise(ok => setTimeout(ok, 200));   // a background send may still be running
-      const r = cfg().url ? await flushQueue(play.id) : null;
+      // Try again / Change are grey while the ranking is checked (max RANK_WAIT_MS), so nobody skips the Instagram box by accident.
+      // Offline → no check, no Instagram box; the score stays on this device and is sent later.
+      lockResult(true, 'Checking today’s ranking…');
+      const t0 = performance.now();
+      const ask = (async () => {
+        for (let w = 0; flushing && w < 25; w++) await new Promise(ok => setTimeout(ok, 200));   // a background send may still be running
+        return cfg().url && navigator.onLine !== false ? await flushQueue(play.id) : null;
+      })();
+      let r = await Promise.race([ask, new Promise(ok => setTimeout(() => ok('timeout'), RANK_WAIT_MS))]);
+      if (r === 'timeout') { oplog('read_rank', LEVEL, 'failed', 'no answer in ' + RANK_WAIT_MS + ' ms (score is still sent in the background)', Math.round(performance.now() - t0)); r = null; }
       you.className = 'you';
       if (r && r.ok) { you.textContent = `🏆 You are #${r.rank} of ${r.total} today (${Lname})` + (r.best > play.score ? ` · your best is ${r.best.toLocaleString()}` : '');
         // Instagram box: only top 3, and only when THIS play is the player's best (the ID is saved on this play's row)
@@ -1479,19 +1530,27 @@
         const list = localRanking(LEVEL), me = list.findIndex(p => p.nickname === NICK) + 1;
         you.textContent = `🏆 You are #${me} of ${list.length} on this device today (${Lname})` + (cfg().url ? ' · score saved, it will be sent later' : '');
       }
+      if (!IG.open) lockResult(false);   // no Instagram box → the buttons work again at once
     }
 
+    const RANK_WAIT_MS = 5000;   // longest time the result buttons wait for the sheet
+    function lockResult(on, note) {
+      ['retry-btn', 'choose-btn'].forEach(id => $(id).disabled = on);
+      $('r-lock').textContent = on ? (note || '') : '';
+    }
     /* ---------- Instagram (optional, top 3). The ID goes only to the sheet: never to this device's history, CSV or log. ---------- */
     const IG = { playId: '', open: false };
-    function igHide() { IG.open = false; IG.playId = ''; $('ig').classList.add('hidden'); }
+    function igHide() { IG.open = false; IG.playId = ''; $('ig').classList.add('hidden'); $('ig').parentElement.classList.remove('with-ig'); }
     function igShow(play) {
       IG.playId = play.id; IG.open = true;
       $('ig-id').value = ''; $('ig-agree').checked = false; $('ig-adult').checked = false; $('ig-err').textContent = '';
       $('ig-form').classList.remove('hidden'); $('ig-done').classList.add('hidden'); $('ig').classList.remove('done', 'hidden');
+      $('ig').parentElement.classList.add('with-ig');   // wide 2-column result on landscape tablets
+      lockResult(true, '📸 Tap Save or Skip in the Instagram box to continue.');   // stays grey until the player decides
       $('ig-save').disabled = false;
       oplog('insta_offer', play.level, 'success', 'top 3');
     }
-    $('ig-skip').onclick = () => { oplog('insta_skip', LEVEL, 'success'); igHide(); };
+    $('ig-skip').onclick = () => { oplog('insta_skip', LEVEL, 'success'); igHide(); lockResult(false); };
     $('ig-save').onclick = async () => {
       const id = $('ig-id').value.trim().replace(/^@+/, '');
       if (!/^[A-Za-z0-9._]{1,30}$/.test(id)) { $('ig-err').textContent = 'Check your Instagram ID: only letters, numbers, "." and "_" (up to 30).'; return; }
@@ -1501,7 +1560,7 @@
       try {
         const r = await api('POST', null, { key: cfg().key, device: cfg().device, action: 'insta', id: IG.playId, insta: id, agree: true, adult: true });
         const ms = Math.round(performance.now() - t0);
-        if (r.ok) { oplog('insta_save', LEVEL, 'success', '', ms); IG.open = false; $('ig-form').classList.add('hidden'); $('ig-done').classList.remove('hidden'); $('ig').classList.add('done'); return; }
+        if (r.ok) { oplog('insta_save', LEVEL, 'success', '', ms); IG.open = false; $('ig-form').classList.add('hidden'); $('ig-done').classList.remove('hidden'); $('ig').classList.add('done'); lockResult(false); return; }
         oplog('insta_save', LEVEL, 'failed', r.error, ms);
         $('ig-err').textContent = r.error === 'nickname missing' ? 'Instagram is not ready yet. Please tell the staff (the score sheet needs the update).'
           : r.error === 'wrong key' ? 'Could not save. Please tell the staff (the key is wrong).'

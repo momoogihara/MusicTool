@@ -37,7 +37,7 @@
 
     /* Start screen */
     #intro { position: absolute; inset: 0; z-index: 20; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; }
-    .parade { display: flex; gap: 6px; margin-bottom: 30px; }
+    .parade { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 30px; }
     .parade img { width: 64px; height: 64px; animation: hop 1.8s ease-in-out infinite; }
     @keyframes hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-14px) rotate(-4deg); } 60% { transform: translateY(0); } }
     #intro .eyebrow { font-size: .74rem; font-weight: 600; letter-spacing: .24em; color: var(--muted); }
