@@ -67,16 +67,21 @@
     .big-img { width: 100%; max-width: 260px; display: block; margin: 14px auto 0; border-radius: 14px; box-shadow: 0 10px 30px -10px rgba(0,0,0,.4); }
     .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 999px; font-weight: 600; font-size: .9rem; z-index: 30; max-width: 92vw; text-align: center; }
     .loading { text-align: center; padding: 30px 0; color: var(--muted); }
+    /* Lock screen: nothing on this page is shown until the KEY is typed (checked by the score sheet) */
+    .lock { position: fixed; inset: 0; z-index: 40; background: var(--surface); display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .lock .panel { box-shadow: 0 20px 50px -20px rgba(0,0,0,.25); }
+    .lock .big { font-size: 2.4rem; text-align: center; }
+    body.locked .wrap { visibility: hidden; }
   </style>
 </head>
-<body>
+<body class="locked">
 <div class="wrap">
   <header>
     <div>
       <div class="eyebrow">CASIO · STAFF ONLY</div>
       <h1>📸 Instagram Winners</h1>
     </div>
-    <button class="icon-btn" id="open-set">⚙ Settings</button>
+    <div style="display:flex;gap:8px"><button class="icon-btn" id="lock-now">🔒 Lock</button><button class="icon-btn" id="open-set">⚙ Settings</button></div>
   </header>
 
   <div class="bar">
@@ -92,6 +97,25 @@
   <p class="help">Post the levels marked <b style="color:var(--accent)">NEW</b>. Tap <b>Share card</b> → choose Instagram → add the @mention sticker → post. Then tap <b>Mark as posted</b>.</p>
 
   <div id="list"><div class="loading">Loading…</div></div>
+</div>
+
+<!-- Lock screen (shown every time the page opens, and after 30 min without use) -->
+<div class="lock" id="lock">
+  <div class="panel">
+    <div class="big">🔒</div>
+    <h3 style="text-align:center">Staff only</h3>
+    <p style="text-align:center">Type the KEY to open Instagram Winners.</p>
+    <div id="lk-setup" class="hidden">
+      <label for="lk-url">Score sheet URL (…/exec)</label>
+      <input id="lk-url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec">
+      <label for="lk-staff">Your name (saved with each post)</label>
+      <input id="lk-staff" maxlength="20" autocomplete="off" placeholder="e.g. Rahul">
+    </div>
+    <label for="lk-key">KEY</label>
+    <input id="lk-key" type="password" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div class="err" id="lk-err"></div>
+    <div class="row"><button class="btn" id="lk-open">🔓 Open</button></div>
+  </div>
 </div>
 
 <!-- Settings -->
@@ -161,6 +185,21 @@
   const K = { cfg: 'peekaboo.settings', staff: 'winners.staff', log: 'winners.log', game: 'winners.game' };
   const cfg = () => store.get(K.cfg, { device: 'device-1', url: '', key: '' });
   let DEMO = /[?&]demo=1/.test(location.search);
+  /* ---------- Lock: the KEY must be typed each time (not just saved on the phone). It is checked by the score sheet. ----------
+     Unlocked = this browser tab only (sessionStorage), and only while it is being used (LOCK_AFTER_MS without a tap → locked). */
+  const LOCK_AFTER_MS = 30 * 60 * 1000;
+  const SK = 'winners.unlockedAt';
+  const unlocked = () => { try { return Date.now() - Number(sessionStorage.getItem(SK) || 0) < LOCK_AFTER_MS; } catch (e) { return false; } };
+  const touch = () => { try { if (unlocked()) sessionStorage.setItem(SK, String(Date.now())); } catch (e) {} };
+  function showLock(why) {
+    try { sessionStorage.removeItem(SK); } catch (e) {}
+    DATA = null; $('list').innerHTML = ''; document.body.classList.add('locked');
+    $('lk-key').value = ''; $('lk-err').textContent = '';
+    $('lk-setup').classList.toggle('hidden', !!cfg().url);
+    $('lock').classList.remove('hidden'); setTimeout(() => $(cfg().url ? 'lk-key' : 'lk-url').focus(), 50);
+    if (why) oplog('lock', 'page', 'success', why);
+  }
+  function hideLock() { document.body.classList.remove('locked'); $('lock').classList.add('hidden'); }
   let GAME = store.get(K.game, 'piano'), DATA = null;
 
   /* ---------- Operation log: JSON Lines on this phone. Never stores the key or Instagram IDs. Newest 500. ---------- */
@@ -207,6 +246,7 @@
   /* ---------- Load ---------- */
   let loading = false;
   async function load(manual) {
+    if (!unlocked()) { if (!document.body.classList.contains('locked')) showLock('timeout'); return; }
     if (loading) return; loading = true;
     const t0 = performance.now();
     try {
@@ -437,8 +477,41 @@
   };
   $('s-demo').onclick = () => { DEMO = true; $('set').classList.add('hidden'); load(true); };
 
-  syncTabs(); load();
+  $('lk-open').onclick = async () => {
+    const key = $('lk-key').value.trim(), c = cfg();
+    const url = c.url || $('lk-url').value.trim();
+    if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(url)) { $('lk-err').textContent = 'The URL should start with https://script.google.com/ and end with /exec'; return; }
+    if (!key) { $('lk-err').textContent = 'Type the KEY (ask the person in charge).'; return; }
+    $('lk-open').disabled = true; $('lk-err').textContent = 'Checking…';
+    const t0 = performance.now();
+    let ok = false, msg = '';
+    try {
+      // the sheet checks the KEY; the answer is not used here (the list loads right after)
+      const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 12000);
+      const r = await (await fetch(url, { method: 'POST', body: JSON.stringify({ key, device: 'staff-phone', action: 'winners' }), signal: ctl.signal })).json();
+      clearTimeout(t);
+      ok = !!r.ok; msg = r.ok ? '' : r.error === 'wrong key' ? 'Wrong KEY. Try again.' : 'The score sheet answered: ' + r.error;
+    } catch (e) {
+      // no internet: accept only the KEY already saved on this phone (so the page can still show "offline")
+      ok = !!c.key && key === c.key; msg = ok ? '' : 'Cannot check the KEY — no internet. Try again when it is back.';
+    }
+    $('lk-open').disabled = false;
+    oplog('unlock', 'page', ok ? 'success' : 'failed', ok ? '' : msg, Math.round(performance.now() - t0));   // the KEY itself is never logged
+    if (!ok) { $('lk-err').textContent = msg; $('lk-key').select(); return; }
+    const staff = $('lk-staff').value.trim().slice(0, 20);
+    store.set(K.cfg, Object.assign({}, c, { url, key }));
+    if (staff) store.set(K.staff, staff);
+    try { sessionStorage.setItem(SK, String(Date.now())); } catch (e) {}
+    hideLock(); load(true);
+  };
+  $('lk-key').addEventListener('keydown', e => { if (e.key === 'Enter') $('lk-open').click(); });
+  $('lock-now').onclick = () => showLock('lock button');
+  ['pointerdown', 'keydown'].forEach(ev => document.addEventListener(ev, touch, { passive: true }));
+
+  syncTabs();
+  if (unlocked()) { hideLock(); load(); } else showLock();
   setInterval(() => { if (!document.hidden) load(); }, AUTO_REFRESH_MS);
+  setInterval(() => { if (!unlocked() && !document.body.classList.contains('locked')) showLock('timeout'); }, 30000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
 </script>
 </body>
