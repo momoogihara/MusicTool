@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CASIO keyboard stickers — animals + note names</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;800&family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
+<!-- Print: A4 portrait, scale 100% ("Actual size"), no "fit to page". Check the 50 mm ruler on page 1 first. -->
+<style>
+  @page { size: A4 portrait; margin: 10mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Inter, Arial, sans-serif; color: #15151C; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page { width: 190mm; min-height: 277mm; page-break-after: always; position: relative; }
+  .page:last-child { page-break-after: auto; }
+  h1 { font: 700 15pt Fredoka, Inter, sans-serif; }
+  h1 small { font: 600 9pt Inter, sans-serif; color: #6B6B78; margin-left: 6px; }
+  .info { font-size: 8.5pt; color: #44444F; line-height: 1.45; margin-top: 2mm; }
+  .ruler { display: inline-flex; align-items: center; gap: 2mm; margin-top: 2mm; font-size: 8pt; color: #44444F; }
+  .ruler i { display: inline-block; width: 50mm; height: 3mm; border: .3mm solid #15151C; border-top: 0; background: repeating-linear-gradient(90deg, #15151C 0 .3mm, transparent .3mm 10mm); }
+  .legend { display: flex; flex-wrap: wrap; gap: 1.5mm 4mm; margin-top: 2mm; font-size: 8pt; }
+  .legend span { display: inline-flex; align-items: center; gap: 1mm; }
+  .legend img { width: 5mm; height: 5mm; }
+  .blk { margin-top: 4mm; break-inside: avoid; }
+  .blk h2 { font-size: 8.5pt; font-weight: 800; letter-spacing: .08em; color: #44444F; margin-bottom: 1.2mm; }
+  .blk h2 em { font-style: normal; font-weight: 600; color: #8A8A96; letter-spacing: 0; margin-left: 2mm; }
+  .row { display: flex; flex-wrap: wrap; gap: 1.6mm; }
+  .row + .row { margin-top: 1.6mm; }
+  /* white-key sticker: 18 × 24 mm (full-size key top is about 22 mm wide) */
+  .w, .b { border: .25mm dashed #B9B9C4; border-radius: 2mm; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; }
+  .w { width: 18mm; height: 24mm; gap: .4mm; }
+  .w img { width: 13.5mm; height: 13.5mm; }
+  .w b { font: 700 13pt/1 Fredoka, Inter, sans-serif; color: var(--c); }
+  .w s { text-decoration: none; font-size: 6pt; color: #8A8A96; font-weight: 600; }
+  /* black-key sticker: 10 × 16 mm (black key top is about 12–13 mm wide) */
+  .b { width: 10mm; height: 16mm; gap: .3mm; }
+  .b img { width: 8.5mm; height: 8.5mm; }
+  .b b { font: 700 7.5pt/1 Fredoka, Inter, sans-serif; color: var(--c); }
+  .gap { width: 6mm; }
+  .tag { position: absolute; right: 0; top: 0; font-size: 8pt; font-weight: 800; color: #fff; background: #15151C; border-radius: 99px; padding: 1mm 3mm; }
+  .tag.spare { background: #F08C00; }
+</style>
+</head>
+<body>
+<div id="out"></div>
+<script>
+    const INK = '#2B2B33';
+    const _eye = (x, y, s = 1) => `<ellipse cx="${x}" cy="${y}" rx="${3.6*s}" ry="${4.4*s}" fill="${INK}"/><circle cx="${x+1.3*s}" cy="${y-1.7*s}" r="${1.4*s}" fill="#fff"/>`;
+    const _cheek = (x, y, c = '#FF8FA3') => `<ellipse cx="${x}" cy="${y}" rx="5.2" ry="3.2" fill="${c}" opacity=".55"/>`;
+    const _smile = (x, y, w = 4) => `<path d="M${x-w} ${y} q${w/2} ${w*0.75} ${w} 0 q${w/2} ${w*0.75} ${w} 0" fill="none" stroke="${INK}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`;
+    const _nose = (x, y, c = INK, w = 7) => `<path d="M${x-w/2} ${y-2} Q${x} ${y-4} ${x+w/2} ${y-2} Q${x+w/2-0.5} ${y+2.5} ${x} ${y+3} Q${x-w/2+0.5} ${y+2.5} ${x-w/2} ${y-2}Z" fill="${c}"/>`;
+
+    const ANIMAL_SVG = {
+      LION: `
+        <g fill="#F29E4C">${Array.from({length:14},(_,i)=>{const a=i/14*Math.PI*2;return `<circle cx="${50+Math.cos(a)*33}" cy="${52+Math.sin(a)*33}" r="13"/>`}).join('')}<circle cx="50" cy="52" r="34"/></g>
+        <circle cx="29" cy="30" r="8" fill="#FFD48A"/><circle cx="29" cy="30" r="4" fill="#F7B267"/>
+        <circle cx="71" cy="30" r="8" fill="#FFD48A"/><circle cx="71" cy="30" r="4" fill="#F7B267"/>
+        <circle cx="50" cy="53" r="27" fill="#FFD48A"/>
+        <ellipse cx="50" cy="64" rx="12" ry="9" fill="#FFF1D6"/>
+        ${_eye(40,50)}${_eye(60,50)}${_cheek(33,60)}${_cheek(67,60)}
+        ${_nose(50,60,'#8A5A44')}${_smile(50,65,3.5)}`,
+      CAT: `
+        <path d="M22 44 L26 14 L46 30 Z" fill="#B9BECB"/><path d="M27 37 L29 21 L39 30 Z" fill="#FFB3C1"/>
+        <path d="M78 44 L74 14 L54 30 Z" fill="#B9BECB"/><path d="M73 37 L71 21 L61 30 Z" fill="#FFB3C1"/>
+        <ellipse cx="50" cy="55" rx="32" ry="28" fill="#C9CEDA"/>
+        <path d="M50 28 L46 38 M43 29 L42 37 M57 29 L58 37" stroke="#A5ABB9" stroke-width="2.4" stroke-linecap="round"/>
+        ${_eye(39,53)}${_eye(61,53)}${_cheek(31,63)}${_cheek(69,63)}
+        <path d="M47 61 L53 61 L50 64.5 Z" fill="#FF8FA3"/>${_smile(50,66,3.2)}
+        <path d="M14 58 L30 60 M14 66 L30 64 M86 58 L70 60 M86 66 L70 64" stroke="${INK}" stroke-width="1.3" stroke-linecap="round" opacity=".6"/>`,
+      RABBIT: `
+        <ellipse cx="37" cy="24" rx="9" ry="22" fill="#F1E6DE" stroke="#E0CFC3" stroke-width="1.5" transform="rotate(-10 37 24)"/>
+        <ellipse cx="37" cy="26" rx="4.5" ry="15" fill="#FFC2CF" transform="rotate(-10 37 26)"/>
+        <ellipse cx="63" cy="24" rx="9" ry="22" fill="#F1E6DE" stroke="#E0CFC3" stroke-width="1.5" transform="rotate(10 63 24)"/>
+        <ellipse cx="63" cy="26" rx="4.5" ry="15" fill="#FFC2CF" transform="rotate(10 63 26)"/>
+        <ellipse cx="50" cy="62" rx="30" ry="27" fill="#F7EEE8" stroke="#E0CFC3" stroke-width="1.5"/>
+        ${_eye(39,59)}${_eye(61,59)}${_cheek(31,68)}${_cheek(69,68)}
+        <ellipse cx="50" cy="67" rx="3.2" ry="2.4" fill="#FF8FA3"/>
+        <path d="M50 69 V72 M46 74 Q50 77 50 72 Q50 77 54 74" fill="none" stroke="${INK}" stroke-width="1.7" stroke-linecap="round"/>`,
+      SQUIRREL: `
+        <path d="M56 90 C98 94 104 46 88 22 C78 8 56 12 62 28 C66 38 82 42 80 58 C78 72 64 76 56 90Z" fill="#D9895A"/>
+        <path d="M70 22 C84 24 92 40 90 56" fill="none" stroke="#EDB48C" stroke-width="5" stroke-linecap="round"/>
+        <path d="M24 30 L28 14 L40 28 Z" fill="#C9744A"/><path d="M62 28 L70 14 L74 30 Z" fill="#C9744A"/>
+        <ellipse cx="48" cy="54" rx="28" ry="27" fill="#C9744A"/>
+        <ellipse cx="48" cy="64" rx="17" ry="14" fill="#F6DCC4"/>
+        ${_eye(38,50)}${_eye(58,50)}${_cheek(30,60)}${_cheek(66,60)}
+        ${_nose(48,58,'#5E3A28',6)}${_smile(48,63,3)}
+        <rect x="45" y="65" width="6" height="5" rx="1.2" fill="#fff" stroke="#E5CDB7" stroke-width=".8"/>`,
+      ELEPHANT: `
+        <ellipse cx="20" cy="50" rx="18" ry="22" fill="#9DB3C8"/><ellipse cx="22" cy="51" rx="11" ry="15" fill="#FFC9D3"/>
+        <ellipse cx="80" cy="50" rx="18" ry="22" fill="#9DB3C8"/><ellipse cx="78" cy="51" rx="11" ry="15" fill="#FFC9D3"/>
+        <ellipse cx="50" cy="48" rx="27" ry="26" fill="#B3C6D8"/>
+        <path d="M43 60 C43 74 44 86 52 90 C58 92 62 88 58 84 C54 82 56 74 57 60 Z" fill="#B3C6D8"/>
+        <path d="M45 72 h10 M46 79 h9" stroke="#9DB3C8" stroke-width="1.8" stroke-linecap="round"/>
+        ${_eye(39,46)}${_eye(61,46)}${_cheek(31,57)}${_cheek(69,57)}`,
+      FOX: `
+        <path d="M18 46 L22 12 L44 32 Z" fill="#F07F3C"/><path d="M24 38 L25 21 L37 32 Z" fill="#3A2C2C"/>
+        <path d="M82 46 L78 12 L56 32 Z" fill="#F07F3C"/><path d="M76 38 L75 21 L63 32 Z" fill="#3A2C2C"/>
+        <path d="M14 46 C14 30 30 26 50 26 C70 26 86 30 86 46 C86 64 66 84 50 86 C34 84 14 64 14 46Z" fill="#F38B47"/>
+        <path d="M14 48 C24 54 38 56 50 72 C62 56 76 54 86 48 C84 66 66 84 50 86 C34 84 16 66 14 48Z" fill="#FFF4EA"/>
+        ${_eye(37,50)}${_eye(63,50)}${_cheek(29,62,'#FF8F80')}${_cheek(71,62,'#FF8F80')}
+        <ellipse cx="50" cy="76" rx="4" ry="3" fill="${INK}"/>${_smile(50,80,3)}`,
+      PANDA: `
+        <circle cx="25" cy="27" r="12" fill="${INK}"/><circle cx="75" cy="27" r="12" fill="${INK}"/>
+        <ellipse cx="50" cy="55" rx="34" ry="31" fill="#FFFFFF" stroke="#E4E4EA" stroke-width="2"/>
+        <ellipse cx="36" cy="52" rx="9" ry="11" fill="${INK}" transform="rotate(25 36 52)"/>
+        <ellipse cx="64" cy="52" rx="9" ry="11" fill="${INK}" transform="rotate(-25 64 52)"/>
+        <circle cx="37" cy="52" r="3.4" fill="#fff"/><circle cx="38" cy="51" r="1.6" fill="${INK}"/>
+        <circle cx="63" cy="52" r="3.4" fill="#fff"/><circle cx="62" cy="51" r="1.6" fill="${INK}"/>
+        ${_cheek(27,66)}${_cheek(73,66)}
+        <ellipse cx="50" cy="65" rx="4.5" ry="3.2" fill="${INK}"/>${_smile(50,70,3)}`,
+      GIRAFFE: `
+        <path d="M38 22 V10 M62 22 V10" stroke="#C98A4B" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="38" cy="9" r="5" fill="#B5743C"/><circle cx="62" cy="9" r="5" fill="#B5743C"/>
+        <ellipse cx="18" cy="34" rx="12" ry="6" fill="#F7C548" transform="rotate(-20 18 34)"/><ellipse cx="18" cy="34" rx="6" ry="3" fill="#FFB3C1" transform="rotate(-20 18 34)"/>
+        <ellipse cx="82" cy="34" rx="12" ry="6" fill="#F7C548" transform="rotate(20 82 34)"/><ellipse cx="82" cy="34" rx="6" ry="3" fill="#FFB3C1" transform="rotate(20 82 34)"/>
+        <path d="M24 44 C24 26 36 18 50 18 C64 18 76 26 76 44 C76 56 72 64 72 70 C72 84 62 92 50 92 C38 92 28 84 28 70 C28 64 24 56 24 44Z" fill="#F9CF5C"/>
+        <circle cx="34" cy="30" r="5" fill="#E2A33E"/><circle cx="66" cy="28" r="4" fill="#E2A33E"/><circle cx="58" cy="22" r="3" fill="#E2A33E"/>
+        <ellipse cx="50" cy="76" rx="20" ry="14" fill="#F3B87A"/>
+        <ellipse cx="43" cy="74" rx="2.2" ry="3" fill="#8A5A44"/><ellipse cx="57" cy="74" rx="2.2" ry="3" fill="#8A5A44"/>
+        ${_eye(38,48)}${_eye(62,48)}${_cheek(31,58)}${_cheek(69,58)}${_smile(50,82,3.5)}`,
+      KOALA: `
+        <circle cx="20" cy="38" r="18" fill="#9EA3AF"/><circle cx="21" cy="40" r="11" fill="#E9E5EE"/>
+        <circle cx="80" cy="38" r="18" fill="#9EA3AF"/><circle cx="79" cy="40" r="11" fill="#E9E5EE"/>
+        <ellipse cx="50" cy="56" rx="30" ry="28" fill="#B1B5C1"/>
+        ${_eye(37,52)}${_eye(63,52)}${_cheek(29,66)}${_cheek(71,66)}
+        <ellipse cx="50" cy="62" rx="7.5" ry="10" fill="${INK}"/><ellipse cx="48" cy="57" rx="2.2" ry="3" fill="#fff" opacity=".6"/>
+        ${_smile(50,76,3)}`,
+      ALLIGATOR: `
+        <circle cx="34" cy="30" r="13" fill="#6DC36F"/><circle cx="66" cy="30" r="13" fill="#6DC36F"/>
+        <circle cx="34" cy="29" r="8" fill="#fff"/><circle cx="66" cy="29" r="8" fill="#fff"/>
+        ${_eye(35,30,1.1)}${_eye(65,30,1.1)}
+        <path d="M14 56 C14 40 30 36 50 36 C70 36 86 40 86 56 C86 72 72 82 50 82 C28 82 14 72 14 56Z" fill="#7BCB7C"/>
+        <path d="M20 64 C34 70 66 70 80 64" fill="none" stroke="#4E9E54" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M30 66 l3 5 l3 -4 M44 68 l3 5 l3 -5 M58 68 l3 5 l3 -5" fill="#fff" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/>
+        <ellipse cx="42" cy="47" rx="2.4" ry="1.8" fill="#3F8A46"/><ellipse cx="58" cy="47" rx="2.4" ry="1.8" fill="#3F8A46"/>
+        <circle cx="28" cy="52" r="1.6" fill="#5DAF62"/><circle cx="72" cy="52" r="1.6" fill="#5DAF62"/><circle cx="24" cy="58" r="1.4" fill="#5DAF62"/><circle cx="76" cy="58" r="1.4" fill="#5DAF62"/>
+        ${_cheek(25,60,'#FF9AA2')}${_cheek(75,60,'#FF9AA2')}`,
+      FLAMINGO: `
+        <path d="M34 94 C26 76 48 72 44 58" fill="none" stroke="#FF92B4" stroke-width="12" stroke-linecap="round"/>
+        <path d="M42 18 C38 10 46 6 48 13" fill="none" stroke="#FF7BA5" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="44" cy="42" r="25" fill="#FFA1C0"/>
+        <path d="M64 33 C78 30 90 38 89 50 L88 58 C86 63 80 61 81 55 C82 48 76 46 66 49 Z" fill="#FFF3E6"/>
+        <path d="M88.4 50 L88 58 C86 63 80 61 81 55 C81.5 52 84 50 88.4 50Z" fill="${INK}"/>
+        ${_eye(36,38)}${_eye(54,38)}${_cheek(30,50,'#FF6B95')}${_cheek(58,50,'#FF6B95')}${_smile(45,50,3)}`,
+      BIRD: `
+        <path d="M48 18 C44 8 52 6 54 14 C56 6 64 10 56 20" fill="#3E9FD6"/>
+        <ellipse cx="50" cy="56" rx="34" ry="32" fill="#63B9E8"/>
+        <ellipse cx="50" cy="68" rx="20" ry="17" fill="#DDF2FC"/>
+        <path d="M16 58 C10 66 16 76 26 74 C24 68 22 62 16 58Z" fill="#3E9FD6"/>
+        <path d="M84 58 C90 66 84 76 74 74 C76 68 78 62 84 58Z" fill="#3E9FD6"/>
+        ${_eye(39,48)}${_eye(61,48)}${_cheek(31,58)}${_cheek(69,58)}
+        <path d="M44 55 L56 55 L50 63 Z" fill="#FFB547" stroke="#F09A2A" stroke-width="1" stroke-linejoin="round"/>`
+    };
+
+    const animalSVG = (name) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${ANIMAL_SVG[name] || ''}</svg>`;
+  const NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const ANIMAL = ['LION','CAT','RABBIT','SQUIRREL','ELEPHANT','FOX','PANDA','GIRAFFE','KOALA','ALLIGATOR','FLAMINGO','BIRD'];
+  const COLOR = ['#FF5A5F','#FF7F3F','#FFA62B','#F5C02E','#8CCB3A','#2FBF71','#20B8AE','#2FA4E7','#4C74F6','#7B61FF','#B05CEB','#F2569F'];
+  const img = pc => 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(animalSVG(ANIMAL[pc]));
+  const isBlack = pc => [1, 3, 6, 8, 10].includes(pc);
+  const sticker = m => { const pc = m % 12, oct = Math.floor(m / 12) - 1;
+    return isBlack(pc) ? `<div class="b" style="--c:${COLOR[pc]}"><img src="${img(pc)}" alt=""><b>${NAMES[pc]}</b></div>`
+      : `<div class="w" style="--c:${COLOR[pc]}"><img src="${img(pc)}" alt=""><b>${NAMES[pc]}</b>${pc === 0 ? `<s>C${oct}${m === 60 ? ' · middle C' : ''}</s>` : '<s>&nbsp;</s>'}</div>`; };
+  // one block = the keys lo..hi (MIDI numbers), whites in one row, blacks in the next (same left-to-right order as the keyboard)
+  const block = (title, sub, lo, hi) => { const ks = []; for (let m = lo; m <= hi; m++) ks.push(m);
+    return `<div class="blk"><h2>${title}<em>${sub}</em></h2><div class="row">${ks.filter(m => !isBlack(m % 12)).map(sticker).join('')}</div>` +
+      (ks.some(m => isBlack(m % 12)) ? `<div class="row">${ks.filter(m => isBlack(m % 12)).map(sticker).join('')}</div>` : '') + `</div>`; };
+  const legend = `<div class="legend">${NAMES.map((n, i) => `<span><img src="${img(i)}" alt="">${n} = ${ANIMAL[i][0] + ANIMAL[i].slice(1).toLowerCase()}</span>`).join('')}</div>`;
+  const head = (title, sub, tag, spare) => `<span class="tag ${spare ? 'spare' : ''}">${tag}</span><h1>${title}<small>${sub}</small></h1>`;
+  const octave = (o, note) => block(`OCTAVE ${o}`, note || `C${o} – B${o}`, 12 * (o + 1), 12 * (o + 1) + 11);
+  const pages = [];
+  // 88 keys: A0 – C8
+  pages.push(head('88-key keyboard', 'A0 – C8 · 52 white + 36 black', '88 KEYS · 1/2') +
+    `<p class="info">Print on A4 at <b>100% / Actual size</b>. Check that the bar is 50 mm. Cut along the dashed lines and stick each animal on the key with the same note name (tape or sticker paper). C stickers show the octave number; <b>C4 = middle C</b>.</p>
+     <div class="ruler"><i></i> 50 mm</div>${legend}` +
+    block('LOWEST KEYS', 'A0 – B0', 21, 23) + octave(1) + octave(2) + octave(3));
+  pages.push(head('88-key keyboard', 'continued', '88 KEYS · 2/2') + octave(4, 'C4 – B4 · middle C') + octave(5) + octave(6) + block('OCTAVE 7 + TOP KEY', 'C7 – C8', 96, 108));
+  // 61 keys (CASIO CT-S1000V etc.): C2 – C7, middle C = C4 (the 3rd C from the left)
+  pages.push(head('61-key keyboard', 'C2 – C7 · 36 white + 25 black (e.g. CASIO CT-S1000V)', '61 KEYS · 1/2') +
+    `<p class="info">Start from the <b>lowest key (C2)</b> and use the stickers in order. <b>Middle C (C4)</b> is the 3rd C from the left.</p>${legend}` +
+    octave(2) + octave(3) + octave(4, 'C4 – B4 · middle C (3rd C from the left)'));
+  pages.push(head('61-key keyboard', 'continued', '61 KEYS · 2/2') + octave(5) + block('OCTAVE 6 + TOP KEY', 'C6 – C7', 84, 96));
+  // spares: one octave per keyboard, 2 keyboards
+  pages.push(head('Spare stickers', 'one extra octave for each keyboard (2 keyboards)', 'SPARE', true) +
+    block('SPARE · 88-KEY KEYBOARD', 'one octave (C – B) + extra C', 60, 72) + block('SPARE · 61-KEY KEYBOARD', 'one octave (C – B) + extra C', 60, 72) +
+    block('SPARE · EXTRA SINGLE NOTES', 'one more octave, for any sticker that peels off', 60, 71));
+  document.getElementById('out').innerHTML = pages.map(p => `<section class="page">${p}</section>`).join('');
+</script>
+</body>
+</html>
