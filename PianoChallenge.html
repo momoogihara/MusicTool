@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Piano Challenge — CASIO</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=Noto+Music&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=Fredoka:wght@500;600;700&family=Noto+Music&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #FFFFFF;
@@ -180,8 +180,48 @@
     body.animal .white .ani { display: block; }
     .btn.ghost { background: #fff; color: var(--ink); border: 1px solid var(--line); }
     .btn.ghost:hover { background: var(--surface); color: var(--ink); }
-    .quit { display: none; align-self: center; font: 600 .82rem 'Inter', sans-serif; color: var(--muted); background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; cursor: pointer; }
-    body.playing .quit { display: inline-block; }
+    /* Restart + Quit sit just above the keys (same place as Animal Peekaboo) */
+    .ctrl { display: flex; justify-content: center; gap: 10px; min-height: 38px; visibility: hidden; }
+    body.playing .ctrl { visibility: visible; }
+    .ctrl button { font: 600 .9rem 'Inter', sans-serif; color: var(--muted); background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px; cursor: pointer; }
+    /* Animals view = same look as Animal Peekaboo: animal on the key, note name in colour, the next key glows in its colour */
+    body.animal .white .ani { width: min(70%, 44px); height: auto; }
+    body.animal .white .nm { font-family: 'Fredoka', 'Inter', sans-serif; font-weight: 700; font-size: .95rem; color: var(--pc); }
+    body.animal .white.next { background: linear-gradient(#fff, #fff); box-shadow: inset 0 0 0 4px var(--pc); animation: glowk 1s ease-in-out infinite; }
+    body.animal .white.next .nm { color: var(--pc); }
+    body.animal .white.next::before { background: var(--pc); }
+    body.animal .white.ok { background: linear-gradient(var(--pc), var(--pc)); } body.animal .white.ok .nm { color: #fff; }
+    body.animal .sc { display: none; }   /* no PC-key letters in the Animals view (cleaner, like Peekaboo) */
+    @keyframes glowk { 50% { box-shadow: inset 0 0 0 7px var(--pc); } }
+    .dup { margin-top: 8px; border: 1.5px solid #F5B5B6; background: #FFF1F1; border-radius: 14px; padding: 10px 12px; font-size: .88rem; line-height: 1.45; color: #8A1C1E; }
+    .dup b { color: #C42528; }
+    .dup .dup-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .dup .dup-btns button { border: 1px solid #F0A3A5; background: #fff; color: #8A1C1E; border-radius: 999px; padding: 7px 14px; font: 600 .85rem 'Inter', sans-serif; cursor: pointer; }
+    .howto-btn { margin-top: 10px; background: #fff; border: 1px solid var(--line); color: var(--ink); border-radius: 999px; padding: 7px 14px; font: 600 .85rem 'Inter', sans-serif; cursor: pointer; }
+    .card.howto { width: min(660px, 94vw); max-height: 92vh; overflow-y: auto; text-align: left; padding: 28px 28px 24px; }
+    .howto h2 { font-size: 1.9rem; }
+    .howto .shot { width: 100%; border-radius: 14px; border: 1px solid var(--line); margin: 12px 0 4px; display: block; background: var(--surface); aspect-ratio: 4 / 3; object-fit: cover; object-position: top; }
+    .howto ol { margin: 10px 0 0 20px; line-height: 1.6; font-size: .95rem; }
+    .howto .lvt { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: .85rem; }
+    .howto .lvt th, .howto .lvt td { text-align: left; padding: 7px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    .howto .lvt th { font-size: .68rem; letter-spacing: .12em; color: var(--muted); }
+    .howto .pts { margin-top: 10px; font-size: .84rem; color: var(--muted); background: var(--surface); border-radius: 12px; padding: 10px 12px; line-height: 1.5; }
+    /* Instagram (top 3 only, optional) — same box as Animal Peekaboo */
+    .igbox { margin-top: 14px; text-align: left; border: 2px solid #2546FF; border-radius: 16px; padding: 14px 16px; background: rgba(37,70,255,.06); }
+    .igbox h4 { font-size: 1.05rem; font-weight: 800; }
+    .igbox .ig-p { font-size: .86rem; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+    .ig-in { display: flex; align-items: center; margin-top: 10px; border: 1px solid var(--line); border-radius: 12px; background: #fff; padding: 0 12px; }
+    .ig-in span { font-weight: 700; color: var(--muted); }
+    .ig-in input { flex: 1; border: 0; background: transparent; color: var(--ink); font: 1.05rem 'Inter', sans-serif; padding: 12px 6px; outline: none; min-width: 0; }
+    .ig-c { display: flex; gap: 10px; align-items: flex-start; font-size: .9rem; margin-top: 10px; line-height: 1.35; cursor: pointer; }
+    .ig-c input { width: 22px; height: 22px; flex: 0 0 22px; accent-color: #2546FF; margin-top: 1px; }
+    .ig-err { color: #E5383B; font-size: .85rem; min-height: 1.1em; margin-top: 8px; }
+    .ig-btns { display: flex; gap: 8px; margin-top: 6px; }
+    .ig-btns .btn { flex: 1; margin-top: 0; padding: 12px 10px; }
+    .igbox.done { border-color: #12A150; background: rgba(18,161,80,.08); text-align: center; }
+    .igbox.done h4 { color: #12A150; }
+    #result-screen .card { max-height: 94vh; overflow-y: auto; }
+    .foot-link { display: block; margin-top: 14px; font-size: .8rem; color: var(--muted); text-align: right; }
     .btn.danger { background: #D63B3B; }
     .card.select { width: min(860px, 94vw); padding: 36px 36px 32px; }
     .levels { display: flex; gap: 6px; justify-content: center; margin-top: 22px; background: var(--surface); border-radius: 999px; padding: 4px; width: fit-content; margin-left: auto; margin-right: auto; }
@@ -278,7 +318,7 @@
         <div class="stat"><div class="label">NOTES</div><div class="value" id="stat-notes">0 / 25</div></div>
         <div class="stat"><div class="label">MISSES</div><div class="value" id="stat-miss">0</div></div>
         <div class="stat"><div class="label">SCORE</div><div class="value" id="stat-score">0</div></div>
-        <button class="quit" id="quit-btn">✕ Quit</button>
+
         <div class="stat timer" id="timer-box"><div class="label">TIME LEFT</div><div class="value" id="timer">40.0</div></div>
       </div>
     </div>
@@ -288,7 +328,7 @@
       <div class="score-head">
         <div class="title" id="score-title">JINGLE BELLS · 8 BARS · 4/4</div>
         <div class="right">
-        <div class="view" data-view><button data-mode="notes" class="on">♪ Notes</button><button data-mode="animal"><img class="li" alt="" style="width:16px;height:16px;vertical-align:-3px;margin-right:4px">Animals</button></div>
+        <div class="view" data-view><button data-mode="animal">🐾 Animals</button><button data-mode="notes" class="on">🎵 Notes</button></div>
         <div class="legend">
           <span><i style="background:var(--accent)"></i>Now</span>
           <span><i style="background:var(--good)"></i>Clean</span>
@@ -300,7 +340,7 @@
     </div>
 
     <div class="keys-area">
-      <div class="hint" id="hint"></div>
+      <div class="ctrl"><button id="restart-btn">↺ Restart</button><button id="quit-btn">✕ Quit</button></div>
       <div class="piano" id="piano"></div>
     </div>
   </div>
@@ -311,11 +351,13 @@
     <div class="card select">
       <div class="eyebrow">CASIO · PIANO CHALLENGE</div>
       <h2>Piano Challenge</h2>
-      <p>Play the whole song before the time runs out.</p>
+      <p>Play the whole song in 1 minute.</p>
+      <button class="howto-btn" id="open-howto">❓ How to play</button>
       <div class="step"><b>1</b>YOUR NICKNAME</div>
       <input id="nick" maxlength="10" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Up to 10 letters (no real names)">
       <div class="chips" id="recent"></div>
       <div class="err" id="nick-err"></div>
+      <div class="dup hidden" id="nick-dup"></div>
       <div class="step"><b>2</b>CHOOSE A LEVEL</div>
       <div class="levels">
         <button class="lv on" data-level="beginner">Beginner</button>
@@ -327,12 +369,12 @@
       <div class="songs" id="songs"></div>
       <div style="margin-top:14px;display:flex;align-items:center;gap:10px;font-size:.82rem;color:var(--muted)">
         Show the music as
-        <div class="view" data-view><button data-mode="notes" class="on">♪ Notes</button><button data-mode="animal"><img class="li" alt="" style="width:16px;height:16px;vertical-align:-3px;margin-right:4px">Animals</button></div>
+        <div class="view" data-view><button data-mode="animal">🐾 Animals</button><button data-mode="notes" class="on">🎵 Notes</button></div>
       </div>
       <div class="start-row">
         <button class="btn" id="start-btn">▶ Start</button>
-        <span>or press any key on the CASIO keyboard</span>
       </div>
+      <a class="foot-link" href="index.html#staff">⚙ Staff settings (Game Zone) · <span id="device-label"></span></a>
     </div>
 
     <div class="card board">
@@ -348,11 +390,36 @@
   <!-- Countdown -->
   <div class="overlay hidden" id="count-screen"><div id="count-num">3</div></div>
 
-  <!-- Quit confirm -->
+  <!-- How to play (opens on page load and from "❓ How to play") -->
+  <div class="overlay hidden" id="howto" style="z-index:65">
+    <div class="card howto">
+      <div class="eyebrow">HOW TO PLAY · 1 MINUTE</div>
+      <h2>Piano Challenge</h2>
+      <img class="shot" src="img/howto_piano.png" alt="Game screen: the score with animal notes and the keyboard">
+      <ol>
+        <li>🎼 Pick a level and a song, then tap <b>▶ Start</b>. A 3-2-1 countdown starts.</li>
+        <li>🔵 The <b>blue note</b> on the score is the one to play now. In Beginner / Intermediate the key also lights up.</li>
+        <li>🎹 Play it on the CASIO keyboard. A chord = press all its notes together (any order).</li>
+        <li>⏱ Finish the whole song in <b>1 minute</b>. A wrong key is a miss — just play the right one and go on.</li>
+      </ol>
+      <table class="lvt">
+        <thead><tr><th>LEVEL</th><th>SONGS</th><th>HANDS / HELP</th></tr></thead>
+        <tbody>
+          <tr><td><b>Beginner</b></td><td>Mary Had a Little Lamb · Jingle Bells · Twinkle Twinkle</td><td>Right hand, white keys · animals + key lights</td></tr>
+          <tr><td><b>Intermediate</b></td><td>Ode to Joy · Happy Birthday · We Wish You a Merry Christmas</td><td>Both hands (left: 1 note) · key lights + names</td></tr>
+          <tr><td><b>Advanced</b></td><td>Für Elise · Mountain King · Turkish March</td><td>Both hands with chords · no lights, no names</td></tr>
+        </tbody>
+      </table>
+      <div class="pts"><b>Points:</b> each note +10 · song finished +300 · +10 per second left · no misses +200.<br><b>Grade:</b> S = finished with 0 misses · A = 3 misses or fewer · B = finished · C = not finished.</div>
+      <div style="text-align:center"><button class="btn" id="howto-ok">👍 Got it</button></div>
+    </div>
+  </div>
+
+  <!-- Quit / Restart confirm -->
   <div class="overlay hidden" id="quit-screen" style="z-index:60">
     <div class="card">
-      <h2 style="font-size:1.6rem">Stop this game?</h2>
-      <p>Your score will not be saved and will not appear in the ranking.</p>
+      <h2 style="font-size:1.6rem" id="q-title">Stop this game?</h2>
+      <p id="q-text">Your score will not be saved and will not appear in the ranking.</p>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
         <button class="btn danger" id="quit-yes">✕ Stop game</button>
         <button class="btn ghost" id="quit-no">▶ Keep playing</button>
@@ -376,11 +443,26 @@
         <div><div class="label">PROGRESS</div><div class="value" id="r-prog">–</div></div>
       </div>
       <div class="you wait" id="r-you">Checking today’s ranking…</div>
+      <div class="igbox hidden" id="ig">
+        <div id="ig-form">
+          <h4>📸 Top 3! Get on CASIO's Instagram</h4>
+          <p class="ig-p">The #1 player is posted in CASIO's Story every hour. Optional — you can skip.</p>
+          <div class="ig-in"><span>@</span><input id="ig-id" maxlength="31" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="your Instagram ID"></div>
+          <label class="ig-c"><input type="checkbox" id="ig-agree"><span>It's OK for CASIO to post my nickname and score, and tag my Instagram.</span></label>
+          <label class="ig-c"><input type="checkbox" id="ig-adult"><span>I am 18 or older, or my parent says OK.</span></label>
+          <div class="ig-err" id="ig-err"></div>
+          <div class="ig-btns"><button class="btn" id="ig-save">Save</button><button class="btn ghost" id="ig-skip">Skip</button></div>
+        </div>
+        <div id="ig-done" class="hidden">
+          <h4>✓ Thank you!</h4>
+          <p class="ig-p">If you are still at the top at the next check, CASIO will post you on Instagram 🎉<br>Follow <b>@casiomusicindia</b> to see it.</p>
+        </div>
+      </div>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
         <button class="btn" id="retry-btn">Try again</button>
         <button class="btn ghost" id="choose-btn">Change song / player</button>
       </div>
-      <p style="font-size:.82rem;margin-top:12px">Or press any key on your CASIO keyboard.</p>
+
     </div>
   </div>
 
@@ -639,17 +721,17 @@
             ['B5',.25],['A5',.25],['G#5',.25],['A5',.25],['B5',.25],['A5',.25],['G#5',.25],['A5',.25],   ['C6',1],['A5',.5],['C6',.5],
             ['B5',.5],['A5',.5],['G5',.5],['A5',.5],   ['B5',.5],['A5',.5],['G5',.5],['A5',.5],   ['B5',.5],['A5',.5],['G5',.5],['F#5',.5]]
     };
-    const TIME_ADV = { elise: 40, mountain: 55, turkish: 40 };   // seconds — same pace as the old 16-bar versions
+    const TIME_ADV = { elise: 60, mountain: 60, turkish: 60 };   // seconds — every song is 1 minute (2026-11-25)
     const Am = ['A2','C3','E3'], Em = ['E3','G3','B3'], B7 = ['B2','D#3','F#3'];
 
     const LEVELS = {
       beginner: {
         label: 'Beginner', hands: 1,
         songs: [
-          { id: 'mary', title: 'Mary Had a Little Lamb', stars: 1, time: 40, meter: 4, rh: [
+          { id: 'mary', title: 'Mary Had a Little Lamb', stars: 1, time: 60, meter: 4, rh: [
             ['E',1],['D',1],['C',1],['D',1],   ['E',1],['E',1],['E',2],   ['D',1],['D',1],['D',2],   ['E',1],['G',1],['G',2],
             ['E',1],['D',1],['C',1],['D',1],   ['E',1],['E',1],['E',1],['E',1],   ['D',1],['D',1],['E',1],['D',1],   ['C',4] ] },
-          { id: 'jingle', title: 'Jingle Bells', stars: 2, time: 40, meter: 4, rh: [
+          { id: 'jingle', title: 'Jingle Bells', stars: 2, time: 60, meter: 4, rh: [
             ['E',1],['E',1],['E',2],   ['E',1],['E',1],['E',2],   ['E',1],['G',1],['C',1],['D',1],   ['E',4],
             ['F',1],['F',1],['F',1],['F',1],   ['F',1],['E',1],['E',1],['E',1],   ['E',1],['D',1],['D',1],['E',1],   ['D',2],['G',2] ] },
           { id: 'twinkle', title: 'Twinkle Twinkle Little Star', stars: 3, time: 60, meter: 4, rh: [
@@ -662,29 +744,24 @@
       intermediate: {
         label: 'Intermediate', hands: 2,
         songs: [
-          { id: 'ode', title: 'Ode to Joy', stars: 1, time: 45, meter: 4,
+          { id: 'ode', title: 'Ode to Joy', stars: 1, time: 60, meter: 4,
             rh: [['E4',1],['E4',1],['F4',1],['G4',1],   ['G4',1],['F4',1],['E4',1],['D4',1],   ['C4',1],['C4',1],['D4',1],['E4',1],   ['E4',1.5],['D4',.5],['D4',2],
                  ['E4',1],['E4',1],['F4',1],['G4',1],   ['G4',1],['F4',1],['E4',1],['D4',1],   ['C4',1],['C4',1],['D4',1],['E4',1],   ['D4',1.5],['C4',.5],['C4',2]],
             lh: [['C3',2],['E3',2],   ['G2',2],['B2',2],   ['C3',2],['E3',2],   ['G2',4],
                  ['C3',2],['E3',2],   ['G2',2],['B2',2],   ['C3',2],['E3',2],   ['G2',2],['C3',2]] },
-          { id: 'birthday', title: 'Happy Birthday', stars: 2, time: 40, meter: 3, pickup: 1,
+          { id: 'birthday', title: 'Happy Birthday', stars: 2, time: 60, meter: 3, pickup: 1,
             rh: [['G4',.5],['G4',.5],
                  ['A4',1],['G4',1],['C5',1],   ['B4',2],['G4',.5],['G4',.5],   ['A4',1],['G4',1],['D5',1],   ['C5',2],['G4',.5],['G4',.5],
                  ['G5',1],['E5',1],['C5',1],   ['B4',1],['A4',1],['F5',.5],['F5',.5],   ['E5',1],['C5',1],['D5',1],   ['C5',2]],
             lh: [['r',1],   ['C3',3],   ['G2',3],   ['G2',3],   ['C3',3],   ['C3',3],   ['F2',3],   ['C3',2],['G2',1],   ['C3',2]] },
-          { id: 'christmas', title: 'We Wish You a Merry Christmas', stars: 2, time: 45, meter: 3, pickup: 1,
+          { id: 'christmas', title: 'We Wish You a Merry Christmas', stars: 3, time: 60, meter: 3, pickup: 1,
             rh: [['D4',1],
                  ['G4',1],['G4',.5],['A4',.5],['G4',.5],['F#4',.5],   ['E4',1],['E4',1],['E4',1],
                  ['A4',1],['A4',.5],['B4',.5],['A4',.5],['G4',.5],    ['F#4',1],['D4',1],['D4',1],
                  ['B4',1],['B4',.5],['C5',.5],['B4',.5],['A4',.5],    ['G4',1],['E4',1],['D4',.5],['D4',.5],
                  ['E4',1],['A4',1],['F#4',1],   ['G4',2]],
-            lh: [['r',1],   ['G2',3],   ['C3',3],   ['A2',3],   ['D3',3],   ['B2',3],   ['E3',3],   ['C3',1],['D3',2],   ['G2',2]] },
-          { id: 'minuet', title: 'Minuet in G', stars: 3, time: 50, meter: 3,
-            rh: [['D5',1],['G4',.5],['A4',.5],['B4',.5],['C5',.5],   ['D5',1],['G4',1],['G4',1],
-                 ['E5',1],['C5',.5],['D5',.5],['E5',.5],['F#5',.5],  ['G5',1],['G4',1],['G4',1],
-                 ['C5',1],['D5',.5],['C5',.5],['B4',.5],['A4',.5],   ['B4',1],['C5',.5],['B4',.5],['A4',.5],['G4',.5],
-                 ['A4',1],['B4',.5],['A4',.5],['G4',.5],['F#4',.5],  ['G4',3]],
-            lh: [['G3',2],['A3',1],   ['B3',3],   ['C4',3],   ['B3',3],   ['A3',3],   ['G3',3],   ['C4',1],['D4',1],['D3',1],   ['G3',2],['G2',1]] }
+            lh: [['r',1],   ['G2',3],   ['C3',3],   ['A2',3],   ['D3',3],   ['B2',3],   ['E3',3],   ['C3',1],['D3',2],   ['G2',2]] }
+          // Minuet in G was removed (2026-11-25): 3 songs per level
         ]
       },
       // Advanced: both hands, left hand plays chords (3+ notes) and bass lines.
@@ -713,6 +790,8 @@
     const LETTER_PC = [0, 2, 4, 5, 7, 9, 11];
     // same note → animal pairs as "Sing & Meet Animals"
     const ANIMAL_BY_PC = ['LION','CAT','RABBIT','SQUIRREL','ELEPHANT','FOX','PANDA','GIRAFFE','KOALA','ALLIGATOR','FLAMINGO','BIRD'];
+    // same note colours as Animal Peekaboo
+    const PITCH_COLORS = ['#FF5A5F','#FF7F3F','#FFA62B','#F5C02E','#8CCB3A','#2FBF71','#20B8AE','#2FA4E7','#4C74F6','#7B61FF','#B05CEB','#F2569F'];
     const freqOf = m => 440 * Math.pow(2, (m - 69) / 12);
     const isBlack = m => [1, 3, 6, 8, 10].includes(((m % 12) + 12) % 12);
     const pcOf = m => ((m % 12) + 12) % 12;
@@ -788,6 +867,7 @@
         if (pcKeys && i < 7) SHORTCUT[String(i + 1)] = m;
         // Advanced: no note names on the keys either — find them by reading the score
         const name = !hints() ? '' : PC_NAME[m % 12] + (CUR.twoHands && m % 12 === 0 ? Math.floor(m / 12) - 1 : '');
+        k.style.setProperty('--pc', PITCH_COLORS[m % 12]);
         k.innerHTML = `<img class="ani" src="${ANIMAL_IMG[ANIMAL_BY_PC[m % 12]].src}" alt=""><span class="nm">${name}</span><span class="sc">${sc.toUpperCase()}</span>`;
         k.addEventListener('pointerdown', () => handleInput(m));
         piano.appendChild(k);
@@ -803,9 +883,6 @@
         b.addEventListener('pointerdown', e => { e.stopPropagation(); handleInput(m); });
         piano.appendChild(b);
       });
-      document.getElementById('hint').innerHTML = CUR.twoHands
-        ? `Play with <b>both hands</b> on your <b>CASIO keyboard</b>. Press every note that starts together (a chord) — any order is fine.`
-        : `Play on your <b>CASIO keyboard</b> — or tap the keys · PC keys <kbd>A</kbd>–<kbd>J</kbd>, black keys <kbd>W</kbd><kbd>E</kbd><kbd>T</kbd>…`;
     }
     const keyEl = m => piano.querySelector(`[data-midi="${m}"]`) || [...piano.children].find(k => pcOf(+k.dataset.midi) === pcOf(m));
 
@@ -973,7 +1050,7 @@
       buildScore(); repaint();
     }
     document.querySelectorAll('[data-view] button').forEach(b => b.addEventListener('click', () => setView(b.dataset.mode)));
-    document.querySelectorAll('img.li').forEach(im => im.src = ANIMAL_IMG.LION.src);
+
 
     /* ---------- Audio ---------- */
     const AC = new (window.AudioContext || window.webkitAudioContext)();
@@ -1123,17 +1200,32 @@
       saveAndRank(success, sc, acc);
     }
 
-    // Quit: the clock stops while the question is open; quitting saves nothing (no score, no ranking) — only the log line
-    function askQuit() { if (!playing || paused) return; paused = true; pausedAt = performance.now(); $('quit-screen').classList.remove('hidden'); }
+    // Quit / Restart: the clock stops while the question is open; neither saves a score (no ranking) — only the log line
+    let askMode = 'quit';
+    function askQuit(mode) {
+      if (!playing || paused) return; askMode = mode; paused = true; pausedAt = performance.now();
+      const restart = mode === 'restart';
+      $('q-title').textContent = restart ? 'Start again from the beginning?' : 'Stop this game?';
+      $('q-text').textContent = restart ? 'The 3-2-1 countdown starts again with the same player and song. The score so far is not saved.' : 'Your score will not be saved and will not appear in the ranking.';
+      $('quit-yes').textContent = restart ? '↺ Restart' : '✕ Stop game';
+      $('quit-screen').classList.remove('hidden');
+    }
     function keepPlaying() { $('quit-screen').classList.add('hidden'); t0 += performance.now() - pausedAt; paused = false; }
+    function restartGame() {
+      oplog('restart_game', LEVEL, 'success', `${NICK} · ${CUR.id} restarted at ${played}/${CUR.allNotes.length} notes, ${Math.max(0, timeLeft).toFixed(1)} s left`, Date.now() - startedAt);
+      playing = false; paused = false; document.body.classList.remove('playing'); clearInterval(timer); clearNext();
+      $('quit-screen').classList.add('hidden'); countdown();
+    }
     function quitGame() {
+      if (askMode === 'restart') return restartGame();
       oplog('quit_game', LEVEL, 'success', `${NICK} · ${CUR.id} quit at ${played}/${CUR.allNotes.length} notes, ${Math.max(0, timeLeft).toFixed(1)} s left`, Date.now() - startedAt);
       playing = false; paused = false; document.body.classList.remove('playing'); clearInterval(timer); clearNext();
       $('quit-screen').classList.add('hidden'); reset();
       $('start-screen').classList.remove('hidden');
       $('nick').value = NICK; renderRecent(); rankLevel = LEVEL; renderTabs(); startRankRefresh();
     }
-    document.getElementById('quit-btn').addEventListener('click', askQuit);
+    document.getElementById('quit-btn').addEventListener('click', () => askQuit('quit'));
+    document.getElementById('restart-btn').addEventListener('click', () => askQuit('restart'));
     document.getElementById('quit-yes').addEventListener('click', quitGame);
     document.getElementById('quit-no').addEventListener('click', keepPlaying);
 
@@ -1163,7 +1255,10 @@
       document.getElementById('level-label').textContent = `CASIO · PIANO CHALLENGE · ${LEVELS[level].label.toUpperCase()}`;
       const animalsOK = LEVELS[level].animals !== false;
       document.querySelectorAll('[data-view]').forEach(v => { const el = v.parentElement.classList.contains('right') ? v : v.parentElement; el.style.display = animalsOK ? '' : 'none'; });
-      if (!animalsOK && viewMode !== 'notes') { viewMode = 'notes'; document.body.classList.remove('animal'); document.querySelectorAll('[data-view] button').forEach(b => b.classList.toggle('on', b.dataset.mode === 'notes')); }
+      // Beginner opens in the Animals view (same as Animal Peekaboo); other levels open with notes
+      viewMode = level === 'beginner' && animalsOK ? 'animal' : 'notes';
+      document.body.classList.toggle('animal', viewMode === 'animal');
+      document.querySelectorAll('[data-view] button').forEach(b => b.classList.toggle('on', b.dataset.mode === viewMode));
       pref.level = level; savePref();
       if (typeof renderTabs === 'function') { rankLevel = level; renderTabs(); loadRanking(); }
       const notes = { beginner: 'One hand, white keys. The next key lights up.', intermediate: 'Both hands: the left hand plays one note at a time.', advanced: 'Both hands with chords. No key lights and no note names — read the score yourself.' };
@@ -1187,15 +1282,8 @@
     });
     let resizeT; addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => { buildPiano(); buildScore(); repaint(); }, 200); });
 
-    // CASIO keyboard: any key starts / restarts, then play the score
-    CasioMIDI.onNote(m => {
-      const startOpen = !document.getElementById('start-screen').classList.contains('hidden');
-      const resultOpen = !document.getElementById('result-screen').classList.contains('hidden');
-      if (startOpen) return startFromHome();   // shows "type a nickname" if it is still empty
-      if (resultOpen) { if (performance.now() - resultAt > 1500) countdown(); return; }
-      if (counting) return;
-      handleInput(m, true);
-    });
+    // CASIO keyboard: only plays notes. A game starts ONLY with the ▶ Start / Try again buttons.
+    CasioMIDI.onNote(m => { if (counting) return; handleInput(m, true); });
 
     /* =====================================================================
        Nickname + ranking (same Google Sheet as Animal Peekaboo, game = "piano")
@@ -1224,7 +1312,8 @@
       set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
     };
     const K = { cfg: 'peekaboo.settings', nicks: 'peekaboo.nicks', log: 'piano.log', hist: 'piano.history', queue: 'piano.queue', pref: 'piano.pref' };
-    const cfg = () => store.get(K.cfg, { device: 'Booth-1', url: '', key: '' });
+    // set in Game Zone → ⚙ Staff settings (shared by both games). Old "Booth-1" names read as "device-1".
+    const cfg = () => { const c = store.get(K.cfg, { device: 'device-1', url: '', key: '' }); c.device = String(c.device || 'device-1').replace(/^booth-(\d)$/i, 'device-$1'); return c; };
     const todayStr = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     let pref = store.get(K.pref, { level: 'beginner', nick: '' });
     function savePref() { store.set(K.pref, pref); }
@@ -1248,18 +1337,45 @@
     function renderRecent() {
       const nicks = store.get(K.nicks, []);
       $('recent').innerHTML = nicks.map(n => `<button class="chip" data-n="${esc(n)}">${esc(n)}</button>`).join('');
-      $('recent').querySelectorAll('.chip').forEach(c => c.onclick = () => { $('nick').value = c.dataset.n; $('nick-err').textContent = ''; });
+      $('recent').querySelectorAll('.chip').forEach(c => c.onclick = () => { $('nick').value = c.dataset.n; $('nick-err').textContent = ''; $('nick-dup').classList.add('hidden'); });
     }
-    $('nick').addEventListener('input', () => { $('nick-err').textContent = ''; });
-    $('nick').addEventListener('keydown', e => { if (e.key === 'Enter') startFromHome(); });
-    function startFromHome() {
-      if (counting) return;
+    $('nick').addEventListener('input', () => { $('nick-err').textContent = ''; $('nick-dup').classList.add('hidden'); });
+    /* Nickname check: the same name twice today would mix two players' scores */
+    let nickOK = '', checking = false;   // nickOK = the name that just played, or that the player said "It's me" for
+    async function nickTaken(n) {
+      const low = n.toLowerCase(), c = cfg();
+      if (c.url) {
+        const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 5000);
+        try {
+          const r = await (await fetch(c.url + '?' + new URLSearchParams({ action: 'nick', game: 'piano', nickname: n }), { signal: ctl.signal })).json();
+          if (r.ok) return !!r.exists;                       // old sheet (no "nick" action) → check this device only
+        } catch (e) { oplog('check_nick', n, 'failed', e.name === 'AbortError' ? 'timeout' : e.message); }
+        finally { clearTimeout(t); }
+      }
+      return store.get(K.hist, []).some(h => h.date === todayStr() && String(h.nickname).toLowerCase() === low);
+    }
+    function showDup(n) {
+      $('nick-dup').innerHTML = `⚠️ <b>“${esc(n)}” is already used today.</b> Please choose another name — for example add a number: <b>${esc(n.slice(0, 9))}2</b>.
+        <div class="dup-btns"><button id="dup-new">✏️ Change name</button><button id="dup-me">✓ It's me — play again</button></div>`;
+      $('nick-dup').classList.remove('hidden');
+      $('dup-new').onclick = () => { $('nick-dup').classList.add('hidden'); $('nick').focus(); $('nick').select(); };
+      $('dup-me').onclick = () => { nickOK = n; $('nick-dup').classList.add('hidden'); oplog('nick_same_player', n, 'success'); startFromHome(); };
+    }
+    async function startFromHome() {
+      if (counting || checking) return;
       const n = cleanNick($('nick').value);
       if (!n) {
         $('nick-err').textContent = 'Type a nickname first (up to 10 letters)' + (store.get(K.nicks, []).length ? ' — or tap a name above.' : '.');
         $('nick').focus(); $('nick').scrollIntoView({ block: 'center', behavior: 'smooth' }); return;
       }
-      NICK = n; pref.nick = n; savePref();
+      $('nick-dup').classList.add('hidden');
+      if (n.toLowerCase() !== nickOK.toLowerCase()) {
+        checking = true; $('start-btn').disabled = true; $('start-btn').textContent = 'Checking name…';
+        const taken = await nickTaken(n);
+        checking = false; $('start-btn').disabled = false; $('start-btn').textContent = '▶ Start';
+        if (taken) { oplog('check_nick', n, 'failed', 'already used today'); showDup(n); return; }
+      }
+      nickOK = n; NICK = n; pref.nick = n; savePref();
       store.set(K.nicks, [n].concat(store.get(K.nicks, []).filter(x => x !== n)).slice(0, 6));
       $('nick').blur(); AC.resume(); countdown();
     }
@@ -1296,7 +1412,7 @@
             const r = await api('POST', null, Object.assign({ key: cfg().key }, play));
             const ms = Math.round(performance.now() - t0);
             if (r.ok) { store.set(K.queue, store.get(K.queue, []).filter(p => p.id !== play.id)); oplog('send_score', play.nickname, 'success', `${play.level} ${play.variant} ${play.score} → #${r.rank}`, ms); if (play.id === wantId) answer = r; }
-            else { oplog('send_score', play.nickname, 'failed', r.error, ms); if (r.error === 'wrong key') { toast('Scores could not be sent: the key is wrong. Ask staff to check Animal Peekaboo → ⚙ Staff settings.', 5000); break; } }
+            else { oplog('send_score', play.nickname, 'failed', r.error, ms); if (r.error === 'wrong key') { toast('Scores could not be sent: the key is wrong. Ask staff to check Game Zone → ⚙ Staff settings.', 5000); break; } }
           } catch (e) { oplog('send_score', play.nickname, 'failed', e.name === 'AbortError' ? 'timeout' : e.message, Math.round(performance.now() - t0)); break; }
         }
       } finally { flushing = false; }
@@ -1322,14 +1438,14 @@
     }
     async function loadRanking() {
       const lv = rankLevel;
-      if (!cfg().url) { setNet('', 'This device only (online ranking is set up in Animal Peekaboo → ⚙ Staff settings)'); drawRank(localRanking(lv)); return; }
+      if (!cfg().url) { setNet('', 'This device only (online ranking is set up in Game Zone → ⚙ Staff settings)'); drawRank(localRanking(lv)); return; }
       const t0 = performance.now();
       try {
         if (!(await serverReady())) throw new Error(serverOK === false ? 'old sheet' : 'offline');
         const r = await api('GET', { action: 'ranking', game: 'piano', level: lv, limit: '10' });
         if (!r.ok) throw new Error(r.error);
         if (lv !== rankLevel) return;
-        setNet('on', `Live · all booths · ${r.total} player${r.total === 1 ? '' : 's'} today`); drawRank(r.top);
+        setNet('on', `Live · all devices · ${r.total} player${r.total === 1 ? '' : 's'} today`); drawRank(r.top);
       } catch (e) {
         if (lv !== rankLevel) return;
         setNet('off', e.message === 'old sheet' ? 'Score sheet needs the update (Code.gs v2) — this device only' : 'Offline — showing this device only');
@@ -1342,6 +1458,7 @@
     /* ---------- Save the play, send it, show "You are #N" ---------- */
     async function saveAndRank(success, sc, acc) {
       const input = Object.entries(inputs).sort((a, b) => b[1] - a[1]).map(e => e[0])[0] || 'none';
+      // ts = the time the game was PLAYED; the sheet dates the score by it (also when it is sent later)
       const play = { id: (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2)), ts: new Date().toISOString(), date: todayStr(),
         device: cfg().device, game: 'piano', nickname: NICK, level: LEVEL, variant: CUR.id, score: sc.total, rankLetter: sc.grade,
         cleared: success ? 1 : 0, maxCombo, accuracy: acc, input, userAgent: navigator.userAgent.slice(0, 120) };
@@ -1350,16 +1467,52 @@
       oplog('finish_game', LEVEL, 'success', `${NICK} ${CUR.id} ${sc.total} pts ${sc.grade}, acc ${acc}%`, Date.now() - startedAt);
 
       const you = $('r-you'), Lname = LEVELS[LEVEL].label;
+      igHide();
       you.className = 'you wait'; you.textContent = 'Checking today’s ranking…';
       for (let w = 0; flushing && w < 25; w++) await new Promise(ok => setTimeout(ok, 200));   // a background send may still be running
       const r = cfg().url ? await flushQueue(play.id) : null;
       you.className = 'you';
-      if (r && r.ok) you.textContent = `🏆 You are #${r.rank} of ${r.total} today (${Lname})` + (r.best > play.score ? ` · your best is ${r.best.toLocaleString()}` : '');
+      if (r && r.ok) { you.textContent = `🏆 You are #${r.rank} of ${r.total} today (${Lname})` + (r.best > play.score ? ` · your best is ${r.best.toLocaleString()}` : '');
+        // Instagram box: only top 3, and only when THIS play is the player's best (the ID is saved on this play's row)
+        if (sc.total > 0 && r.rank >= 1 && r.rank <= 3 && !(r.best > play.score)) igShow(play); }
       else {
         const list = localRanking(LEVEL), me = list.findIndex(p => p.nickname === NICK) + 1;
         you.textContent = `🏆 You are #${me} of ${list.length} on this device today (${Lname})` + (cfg().url ? ' · score saved, it will be sent later' : '');
       }
     }
+
+    /* ---------- Instagram (optional, top 3). The ID goes only to the sheet: never to this device's history, CSV or log. ---------- */
+    const IG = { playId: '', open: false };
+    function igHide() { IG.open = false; IG.playId = ''; $('ig').classList.add('hidden'); }
+    function igShow(play) {
+      IG.playId = play.id; IG.open = true;
+      $('ig-id').value = ''; $('ig-agree').checked = false; $('ig-adult').checked = false; $('ig-err').textContent = '';
+      $('ig-form').classList.remove('hidden'); $('ig-done').classList.add('hidden'); $('ig').classList.remove('done', 'hidden');
+      $('ig-save').disabled = false;
+      oplog('insta_offer', play.level, 'success', 'top 3');
+    }
+    $('ig-skip').onclick = () => { oplog('insta_skip', LEVEL, 'success'); igHide(); };
+    $('ig-save').onclick = async () => {
+      const id = $('ig-id').value.trim().replace(/^@+/, '');
+      if (!/^[A-Za-z0-9._]{1,30}$/.test(id)) { $('ig-err').textContent = 'Check your Instagram ID: only letters, numbers, "." and "_" (up to 30).'; return; }
+      if (!$('ig-agree').checked || !$('ig-adult').checked) { $('ig-err').textContent = 'Please tick both boxes to join, or tap Skip.'; return; }
+      $('ig-save').disabled = true; $('ig-err').textContent = 'Saving…';
+      const t0 = performance.now();
+      try {
+        const r = await api('POST', null, { key: cfg().key, device: cfg().device, action: 'insta', id: IG.playId, insta: id, agree: true, adult: true });
+        const ms = Math.round(performance.now() - t0);
+        if (r.ok) { oplog('insta_save', LEVEL, 'success', '', ms); IG.open = false; $('ig-form').classList.add('hidden'); $('ig-done').classList.remove('hidden'); $('ig').classList.add('done'); return; }
+        oplog('insta_save', LEVEL, 'failed', r.error, ms);
+        $('ig-err').textContent = r.error === 'nickname missing' ? 'Instagram is not ready yet. Please tell the staff (the score sheet needs the update).'
+          : r.error === 'wrong key' ? 'Could not save. Please tell the staff (the key is wrong).'
+          : r.error === 'bad instagram id' ? 'Check your Instagram ID and try again.' : 'Could not save. Please try again.';
+      } catch (e) {
+        oplog('insta_save', LEVEL, 'failed', e.name === 'AbortError' ? 'timeout' : e.message, Math.round(performance.now() - t0));
+        $('ig-err').textContent = 'No internet right now. Try again, or tap Skip.';
+      }
+      $('ig-save').disabled = false;
+    };
+    $('ig-id').addEventListener('keydown', e => { if (e.key === 'Enter') $('ig-save').click(); });
 
     // back to the start screen: keep the nickname typed, refresh the ranking
     document.getElementById('choose-btn').addEventListener('click', () => { $('nick').value = NICK; renderRecent(); rankLevel = LEVEL; renderTabs(); startRankRefresh(); });
@@ -1370,6 +1523,12 @@
     setLevel(LEVELS[pref.level] ? pref.level : 'beginner');
     startRankRefresh(); flushQueue();
     oplog('open_page', 'home', 'success');
+    $('device-label').textContent = cfg().device;
+    /* How to play: shown when the page opens (guests change all day) and from "❓ How to play" */
+    function openHowto(why) { $('howto').classList.remove('hidden'); oplog('open_howto', 'home', 'success', why); }
+    $('open-howto').onclick = () => openHowto('button');
+    $('howto-ok').onclick = () => $('howto').classList.add('hidden');
+    if (!/[?&]nohowto/.test(location.search)) openHowto('page open');
   </script>
 </body>
 </html>

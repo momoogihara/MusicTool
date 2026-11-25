@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex">
   <title>Instagram Winners · Staff</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
   <style>
     :root { --ink: #111116; --muted: #6E6E7A; --line: #E4E4EA; --surface: #F5F5F7; --accent: #2546FF; --accent-soft: #EEF1FF;
             --ok: #12A150; --ok-soft: #E8F7EE; --warn: #B26A00; --warn-soft: #FFF4D6; --ng: #E5383B; }
@@ -48,6 +48,9 @@
     .btn.ghost { background: #fff; color: var(--ink); border: 1px solid var(--line); }
     .btn.okb { background: var(--ok); }
     .btn.full { grid-column: 1 / -1; }
+    .btn.remove { background: #fff; color: var(--ng); border: 1px solid #F3C2C3; font-weight: 600; font-size: .88rem; }
+    .btn.dangerb { background: var(--ng); }
+    .panel .warn { margin-top: 10px; font-size: .85rem; line-height: 1.45; padding: 8px 10px; border-radius: 10px; background: var(--warn-soft); color: var(--warn); }
     .btn:disabled { opacity: .4; cursor: default; }
     .empty { text-align: center; color: var(--muted); padding: 18px 0 6px; font-size: .92rem; }
     /* overlays */
@@ -156,7 +159,7 @@
   };
   // URL + key are SHARED with the games (same site → same storage), so a phone already set up for a game works here too.
   const K = { cfg: 'peekaboo.settings', staff: 'winners.staff', log: 'winners.log', game: 'winners.game' };
-  const cfg = () => store.get(K.cfg, { device: 'Booth-1', url: '', key: '' });
+  const cfg = () => store.get(K.cfg, { device: 'device-1', url: '', key: '' });
   let DEMO = /[?&]demo=1/.test(location.search);
   let GAME = store.get(K.game, 'piano'), DATA = null;
 
@@ -185,9 +188,9 @@
   }
 
   /* ---------- Sample data (Try with sample data / ?demo=1) ---------- */
-  const demoPosted = {};
+  const demoPosted = {}, demoRemoved = new Set();
   function demoData() {
-    const mk = (game, level, players, top, pick, lastPosted) => ({ game, level, players, top, pick, lastPosted: demoPosted[game + level] || lastPosted || null,
+    const mk = (game, level, players, top, pick, lastPosted) => (pick && demoRemoved.has(pick.id) && (pick = null, top && (top.agreed = false)), { game, level, players, top, pick, lastPosted: demoPosted[game + level] || lastPosted || null,
       isNew: !!pick && !(demoPosted[game + level] && demoPosted[game + level].play_id === pick.id) && !(lastPosted && lastPosted.play_id === pick.id) });
     return { ok: true, date: new Date().toISOString().slice(0, 10), now: new Date().toTimeString().slice(0, 5), winners: [
       mk('piano', 'beginner', 21, { nickname: 'PIA', score: 5120, agreed: true }, { nickname: 'PIA', score: 5120, insta: 'pia.music', id: 'd1', variant: 'mary', accuracy: 98, time: '13:42', rank: 1 },
@@ -252,6 +255,7 @@
             <button class="btn" data-act="share" data-i="${i}">📤 Share card</button>
             <button class="btn ghost" data-act="caption" data-i="${i}">📋 Copy caption</button>
             <button class="btn ghost full" data-act="posted" data-i="${i}" ${w.isNew ? '' : 'disabled'}>${w.isNew ? '✓ Mark as posted' : '✓ Already posted'}</button>
+            <button class="btn remove full" data-act="remove" data-i="${i}">🚫 Remove (guest said no)</button>
           </div>`;
       }
       return `<div class="card"><div class="card-head"><h2>${LEVEL_NAME[w.level]}<span class="sub">${w.players} player${w.players === 1 ? '' : 's'} today</span></h2>${badge}</div>${body}</div>`;
@@ -264,36 +268,90 @@
     }
   }
 
-  /* ---------- Winner card: drawn in the browser (Canvas), 1080 × 1920 = Instagram Story size ---------- */
+  /* ---------- Winner card: drawn in the browser (Canvas), 1080 × 1920 = Instagram Story size ----------
+     Design (2026-11-25): dark "night stage" with soft colour lights, big CASIO + game title,
+     a gold #1 badge, the LEVEL as a coloured ribbon, and a keyboard strip at the bottom.
+     The band 1650–1790 is left empty on purpose → staff put the @mention sticker there. */
+  const LEVEL_COLOR = { beginner: '#3DDC97', intermediate: '#4CC9FF', advanced: '#FF5C8A' };
+  const GAME_LIGHT = { piano: ['#2546FF', '#8F5CFF'], peekaboo: ['#FF7F3F', '#FF4F9A'] };
+  const NOTE_COLORS = ['#FF5A5F', '#FFA62B', '#F5C02E', '#8CCB3A', '#2FBF71', '#20B8AE', '#2FA4E7', '#7B61FF', '#F2569F'];
   async function drawCard(w) {
-    try { await document.fonts.load('800 100px Inter'); await document.fonts.load('600 40px Inter'); } catch (e) {}
+    try { await Promise.all(['800 100px Inter', '600 40px Inter', '700 100px Fredoka', '600 40px Fredoka'].map(f => document.fonts.load(f))); } catch (e) {}
     const p = w.pick, W = 1080, H = 1920, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
-    const x = cv.getContext('2d'), F = (wt, px) => `${wt} ${px}px Inter, system-ui, sans-serif`;
-    const g = x.createLinearGradient(0, 0, W * .6, H); g.addColorStop(0, '#1B2BFF'); g.addColorStop(.45, '#2546FF'); g.addColorStop(1, '#0B0F3A');
-    x.fillStyle = g; x.fillRect(0, 0, W, H);
-    x.textAlign = 'center'; x.textBaseline = 'alphabetic';
-    const spaced = (t, y, font, color, sp) => { x.font = font; x.fillStyle = color; if ('letterSpacing' in x) { x.letterSpacing = sp + 'px'; x.fillText(t, W / 2 + sp / 2, y); x.letterSpacing = '0px'; } else x.fillText(t, W / 2, y); };
-    // fit text into a width by shrinking the font
-    const fit = (t, y, wt, px, max, color) => { x.font = F(wt, px); while (x.measureText(t).width > max && px > 30) { px -= 4; x.font = F(wt, px); } x.fillStyle = color; x.fillText(t, W / 2, y); };
-    spaced('CASIO', 205, F(800, 58), '#fff', 18);
-    spaced(EVENT_NAME + ' · ' + GAME_NAME[w.game].toUpperCase(), 275, F(500, 30), 'rgba(255,255,255,.8)', 4);
-    x.font = '210px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif'; x.fillText('🏆', W / 2, 700);
-    const label = p.rank > 1 ? `TODAY'S TOP PLAYER · ${LEVEL_NAME[w.level].toUpperCase()}` : `TODAY'S #1 · ${LEVEL_NAME[w.level].toUpperCase()}`;
-    spaced(label, 805, F(700, 42), '#FFD54A', 8);
-    fit(p.nickname, 980, 800, 160, 940, '#fff');
-    x.font = F(800, 118); const sc = p.score.toLocaleString(); const sw = x.measureText(sc).width; x.font = F(600, 46); const pw = x.measureText(' pts').width;
-    x.textAlign = 'left'; x.font = F(800, 118); x.fillStyle = '#fff'; x.fillText(sc, (W - sw - pw) / 2, 1125);
-    x.font = F(600, 46); x.fillStyle = 'rgba(255,255,255,.75)'; x.fillText(' pts', (W - sw - pw) / 2 + sw, 1125); x.textAlign = 'center';
-    const detail = (w.game === 'piano' && SONG[p.variant] ? '🎹 ' + SONG[p.variant] + ' · ' : '🐾 ') + p.accuracy + '% accuracy';
-    x.font = F(700, 38); const dw = Math.min(980, x.measureText(detail).width + 80);
-    x.fillStyle = 'rgba(255,255,255,.15)'; roundRect(x, (W - dw) / 2, 1180, dw, 80, 40); x.fill();
-    fit(detail, 1233, 700, 38, dw - 60, '#fff');
-    x.font = F(500, 32); x.fillStyle = 'rgba(255,255,255,.7)'; x.fillText('as of ' + (DATA && DATA.now || ''), W / 2, 1320);
-    x.font = F(700, 48); x.fillStyle = '#fff'; x.fillText('Can you beat this score?', W / 2, 1500);
-    x.font = F(500, 34); x.fillStyle = 'rgba(255,255,255,.78)'; x.fillText('Play at the CASIO booth 🎶', W / 2, 1562);
-    // the space under this line is left empty on purpose → staff put the @mention sticker there
+    const x = cv.getContext('2d');
+    const F = (wt, px, cute) => `${wt} ${px}px ${cute ? 'Fredoka, ' : ''}Inter, system-ui, sans-serif`;
+    const LV = LEVEL_COLOR[w.level] || '#4CC9FF', [c1, c2] = GAME_LIGHT[w.game] || GAME_LIGHT.piano;
+    const spaced = (t, cx, y, font, color, sp) => { x.font = font; x.fillStyle = color; x.textAlign = 'center';
+      if ('letterSpacing' in x) { x.letterSpacing = sp + 'px'; x.fillText(t, cx + sp / 2, y); x.letterSpacing = '0px'; } else x.fillText(t, cx, y); };
+    const fit = (t, y, wt, px, max, fill, cute) => { x.font = F(wt, px, cute); while (x.measureText(t).width > max && px > 30) { px -= 4; x.font = F(wt, px, cute); } x.fillStyle = fill; x.textAlign = 'center'; x.fillText(t, W / 2, y); return px; };
+    const light = (cx, cy, r, c, a) => { const g = x.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, hexA(c, a)); g.addColorStop(1, hexA(c, 0)); x.fillStyle = g; x.fillRect(0, 0, W, H); };
+    const sparkle = (cx, cy, r, c) => { x.fillStyle = c; x.beginPath(); x.moveTo(cx, cy - r); x.quadraticCurveTo(cx, cy, cx + r, cy); x.quadraticCurveTo(cx, cy, cx, cy + r); x.quadraticCurveTo(cx, cy, cx - r, cy); x.quadraticCurveTo(cx, cy, cx, cy - r); x.fill(); };
+    // pill with text; the font shrinks until the text fits the card width
+    const pill = (text, cy, wt, px, bg, fg, padX, h, sp = 0) => { let font, tw;
+      do { font = F(wt, px); x.font = font; if ('letterSpacing' in x) x.letterSpacing = sp + 'px'; tw = x.measureText(text).width; if ('letterSpacing' in x) x.letterSpacing = '0px'; px -= 2; } while (tw + padX * 2 > W - 80 && px > 20);
+      const pw = tw + padX * 2; x.fillStyle = bg; roundRect(x, (W - pw) / 2, cy - h / 2, pw, h, h / 2); x.fill(); x.textBaseline = 'middle'; spaced(text, W / 2, cy + 2, font, fg, sp); x.textBaseline = 'alphabetic'; };
+
+    // 1. background: night stage + colour lights + fine dot grid
+    x.fillStyle = '#0A0B24'; x.fillRect(0, 0, W, H);
+    light(140, 360, 760, c1, .75); light(980, 980, 720, c2, .6); light(160, 1560, 620, LV, .35); light(900, 120, 420, '#FFD54A', .18);
+    x.fillStyle = 'rgba(255,255,255,.07)'; for (let gy = 30; gy < H; gy += 46) for (let gx = 30; gx < W; gx += 46) { x.beginPath(); x.arc(gx, gy, 2, 0, 7); x.fill(); }
+    // floating notes + sparkles (fixed positions → the same card every time)
+    [[90, 560, 64, 0, -.25], [985, 470, 74, 3, .2], [70, 1180, 56, 6, -.1], [1010, 1270, 60, 7, .25], [150, 960, 44, 4, .1], [930, 760, 46, 8, -.2]].forEach(([nx, ny, s, ci, rot]) => {
+      x.save(); x.translate(nx, ny); x.rotate(rot); x.font = F(700, s); x.fillStyle = NOTE_COLORS[ci]; x.textAlign = 'center'; x.fillText(ci % 2 ? '♫' : '♪', 0, 0); x.restore(); });
+    [[210, 330, 16, '#FFD54A'], [880, 300, 22, '#fff'], [300, 840, 14, '#fff'], [800, 1110, 18, '#FFD54A'], [990, 1710, 14, '#fff'], [120, 1420, 18, '#FFD54A']].forEach(s => sparkle(...s));
+
+    // 2. top: CASIO + event pill (Hornbill Festival · CASIO booth)
+    spaced('CASIO', W / 2, 180, F(800, 76), '#fff', 26);
+    pill(EVENT_NAME + ' · CASIO BOOTH', 262, 800, 32, '#FFD54A', '#14142B', 40, 76, 4);
+
+    // 3. game title — big, two lines, soft gradient
+    spaced('CASIO', W / 2, 410, F(700, 40), 'rgba(255,255,255,.78)', 14);
+    const words = GAME_NAME[w.game].toUpperCase().split(' ');
+    const tg = x.createLinearGradient(0, 430, 0, 700); tg.addColorStop(0, '#FFFFFF'); tg.addColorStop(1, hexA(LV, 1));
+    x.save(); x.shadowColor = hexA(c1, .9); x.shadowBlur = 40;
+    fit(words[0], 536, 700, 150, 960, tg, true); fit(words.slice(1).join(' '), 670, 700, 150, 960, tg, true);
+    x.restore();
+
+    // 4. gold #1 badge with a crown
+    const bx = W / 2, by = 958, br = 124;
+    x.save(); x.shadowColor = 'rgba(255,200,60,.65)'; x.shadowBlur = 60;
+    const gg = x.createLinearGradient(bx - br, by - br, bx + br, by + br); gg.addColorStop(0, '#FFF1A8'); gg.addColorStop(.5, '#FFCF3F'); gg.addColorStop(1, '#F29A1A');
+    x.fillStyle = gg; x.beginPath(); x.arc(bx, by, br, 0, 7); x.fill(); x.restore();
+    x.strokeStyle = 'rgba(255,255,255,.75)'; x.lineWidth = 6; x.beginPath(); x.arc(bx, by, br - 16, 0, 7); x.stroke();
+    x.fillStyle = '#FFCF3F'; x.beginPath(); x.moveTo(bx - 96, by - br + 6); x.lineTo(bx - 110, by - br - 92); x.lineTo(bx - 50, by - br - 40); x.lineTo(bx, by - br - 118);
+    x.lineTo(bx + 50, by - br - 40); x.lineTo(bx + 110, by - br - 92); x.lineTo(bx + 96, by - br + 6); x.closePath(); x.fill();
+    [[-110, -92], [0, -118], [110, -92]].forEach(([dx, dy]) => { x.fillStyle = '#fff'; x.beginPath(); x.arc(bx + dx, by - br + dy, 13, 0, 7); x.fill(); });
+    x.fillStyle = '#5A3A00'; x.textAlign = 'center'; x.font = F(700, p.rank > 1 ? 110 : 150, true); x.textBaseline = 'middle';
+    x.fillText(p.rank > 1 ? 'TOP' : '#1', bx, by + 8); x.textBaseline = 'alphabetic';
+
+    // 5. the level ribbon: "TODAY'S #1 · BEGINNER LEVEL" (the most important line, so it is the brightest)
+    const label = (p.rank > 1 ? "TODAY'S TOP PLAYER · " : "TODAY'S #1 · ") + LEVEL_NAME[w.level].toUpperCase() + ' LEVEL';
+    x.save(); x.shadowColor = hexA(LV, .8); x.shadowBlur = 36; pill(label, 1162, 800, 44, LV, '#0A0B24', 46, 96, 3); x.restore();
+
+    // 6. player + score
+    fit(p.nickname, 1350, 700, 170, 960, '#FFFFFF', true);
+    x.font = F(800, 124); const sc = p.score.toLocaleString(), sw = x.measureText(sc).width; x.font = F(800, 50); const pw = x.measureText(' PTS').width;
+    x.textAlign = 'left'; x.font = F(800, 124); x.fillStyle = '#fff'; x.fillText(sc, (W - sw - pw) / 2, 1480);
+    x.font = F(800, 50); x.fillStyle = LV; x.fillText(' PTS', (W - sw - pw) / 2 + sw, 1480); x.textAlign = 'center';
+    const detail = (w.game === 'piano' && SONG[p.variant] ? SONG[p.variant] + '  ·  ' : '') + p.accuracy + '% accuracy  ·  as of ' + (DATA && DATA.now || '');
+    x.font = F(600, 34); const dw = Math.min(980, x.measureText(detail).width + 90);
+    x.fillStyle = 'rgba(255,255,255,.12)'; roundRect(x, (W - dw) / 2, 1516, dw, 72, 36); x.fill();
+    x.strokeStyle = 'rgba(255,255,255,.22)'; x.lineWidth = 2; x.stroke();
+    fit(detail, 1564, 600, 34, dw - 60, 'rgba(255,255,255,.9)');
+
+    // 7. call to action (the band below it, about 1680–1790, stays empty for the @mention sticker)
+    fit('Can you beat this score?', 1660, 700, 56, 960, '#FFFFFF', true);
+
+    // 8. keyboard strip at the bottom
+    const top = 1800, kw = W / 15;
+    x.fillStyle = '#F4F4F8'; x.fillRect(0, top, W, H - top);
+    x.strokeStyle = '#C9CAD6'; x.lineWidth = 2; for (let i = 1; i < 15; i++) { x.beginPath(); x.moveTo(i * kw, top); x.lineTo(i * kw, H); x.stroke(); }
+    x.fillStyle = '#14142B'; [0, 1, 3, 4, 5, 7, 8, 10, 11, 12].forEach(i => x.fillRect((i + 1) * kw - kw * .3, top, kw * .6, 72));
+    const lg = x.createLinearGradient(0, top - 10, W, top - 10); lg.addColorStop(0, c1); lg.addColorStop(.5, LV); lg.addColorStop(1, c2);
+    x.fillStyle = lg; x.fillRect(0, top - 10, W, 10);
     return cv;
   }
+  const hexA = (h, a) => { const n = parseInt(h.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; };
   function roundRect(x, l, t, w, h, r) { x.beginPath(); x.moveTo(l + r, t); x.arcTo(l + w, t, l + w, t + h, r); x.arcTo(l + w, t + h, l, t + h, r); x.arcTo(l, t + h, l, t, r); x.arcTo(l, t, l + w, t, r); x.closePath(); }
 
   const caption = w => `Congrats @${w.pick.insta}! 🏆 Today's top score in ${GAME_NAME[w.game]} (${LEVEL_NAME[w.level]}): ${w.pick.score.toLocaleString()} pts. Can you beat it? Come and play at the CASIO booth 🎹 ${HASHTAGS}`;
@@ -322,7 +380,30 @@
       }
       oplog('copy_caption', target, ok ? 'success' : 'failed'); toast(ok ? '✓ Caption copied — paste it in Instagram' : 'Could not copy. Please type it by hand.');
     }
+    // Guest says "do not post me": the Instagram ID is removed from the sheet (all their plays), the card moves to the next player who agreed
+    if (act === 'remove') {
+      const wasPosted = !w.isNew && w.lastPosted;
+      $('c-title').textContent = 'Remove this player from Instagram?';
+      $('c-text').innerHTML = `<b>${esc(w.pick.nickname)}</b> · ${GAME_NAME[w.game]} · ${LEVEL_NAME[w.level]} · @${esc(w.pick.insta)}<br>`
+        + `Their Instagram ID and OK are deleted from the score sheet (all their plays). Their score stays in the ranking. This cannot be undone.`
+        + (wasPosted ? `<div class="warn">⚠️ This card was already posted at ${esc(w.lastPosted.time)}. After this, <b>delete the Story in Instagram</b> too (and remove it from Highlights).</div>`
+                     : `<div class="warn">If you already posted this player somewhere, delete that post in Instagram too.</div>`);
+      $('c-yes').textContent = '🚫 Yes, remove'; $('c-yes').className = 'btn dangerb';
+      $('confirm').classList.remove('hidden');
+      $('c-yes').onclick = async () => {
+        $('confirm').classList.add('hidden');
+        if (DEMO) { demoRemoved.add(w.pick.id); oplog('remove_consent', target, 'success', 'demo'); toast('✓ Removed (sample data)'); load(); return; }
+        try {
+          const r = await api({ action: 'unconsent', playId: w.pick.id, game: w.game, level: w.level, nickname: w.pick.nickname, staff: store.get(K.staff, '') });
+          // the log never keeps the Instagram ID
+          oplog('remove_consent', target, r.ok ? 'success' : 'failed', r.ok ? `rows ${r.rows}, posts ${r.posts}` : r.error, Math.round(performance.now() - t0));
+          if (r.ok) { toast(wasPosted ? '✓ Removed. Now delete the Story in Instagram.' : '✓ Removed from Instagram list', 4500); load(true); }
+          else toast(r.error === 'score out of range' || r.error === 'nickname missing' ? 'The score sheet needs the update (Code.gs v4).' : 'Could not remove: ' + r.error + '. Try again.', 4500);
+        } catch (e) { oplog('remove_consent', target, 'failed', e.message, Math.round(performance.now() - t0)); toast('No internet. Try again when it is back.', 4000); }
+      };
+    }
     if (act === 'posted') {
+      $('c-yes').textContent = 'Yes, posted'; $('c-yes').className = 'btn okb';
       $('c-title').textContent = 'Did you post this card?';
       $('c-text').innerHTML = `<b>${esc(w.pick.nickname)}</b> · ${LEVEL_NAME[w.level]} · ${w.pick.score.toLocaleString()} pts<br>This level will stop showing NEW until the #1 changes.`;
       $('confirm').classList.remove('hidden');

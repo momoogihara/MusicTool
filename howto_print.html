@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CASIO Game Zone — How to Play (print)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
+  <!-- Printable guide for the booth wall: 1 A4 page per game. Print from the browser (A4, portrait, margins: none / default). -->
+  <style>
+    @page { size: A4 portrait; margin: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Inter, 'Helvetica Neue', Arial, sans-serif; color: #15151C; background: #E9E9EF; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .bar { position: sticky; top: 0; background: #15151C; color: #fff; padding: 10px 16px; display: flex; gap: 12px; align-items: center; justify-content: center; font-size: .9rem; z-index: 5; }
+    .bar button { font: 700 .9rem Inter, sans-serif; border: 0; border-radius: 999px; padding: 8px 18px; background: #fff; color: #15151C; cursor: pointer; }
+    .page { width: 210mm; height: 297mm; margin: 12px auto; background: #fff; position: relative; overflow: hidden; padding: 14mm 14mm 12mm; display: flex; flex-direction: column; }
+    .page + .page { page-break-before: always; }
+    .band { position: absolute; left: 0; right: 0; top: 0; height: 9mm; background: var(--c); }
+    .brand { display: flex; justify-content: space-between; align-items: center; margin-top: 2mm; }
+    .brand .casio { font-weight: 800; letter-spacing: .35em; font-size: 15pt; }
+    .brand .ev { font-size: 9pt; font-weight: 700; letter-spacing: .18em; color: #6B6B78; }
+    h1 { font-family: Fredoka, Inter, sans-serif; font-size: 40pt; line-height: 1; margin-top: 7mm; }
+    h1 small { display: block; font-family: Inter, sans-serif; font-size: 12pt; font-weight: 700; letter-spacing: .2em; color: var(--c); margin-bottom: 3mm; }
+    .lead { font-size: 13pt; color: #44444F; margin-top: 3mm; line-height: 1.4; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 7mm; margin-top: 6mm; align-items: start; }
+    .shot { width: 100%; border-radius: 4mm; border: .4mm solid #E1E1E8; display: block; }
+    .steps { list-style: none; counter-reset: s; }
+    .steps li { counter-increment: s; position: relative; padding-left: 11mm; margin-bottom: 4.2mm; font-size: 11.5pt; line-height: 1.4; }
+    .steps li::before { content: counter(s); position: absolute; left: 0; top: -.5mm; width: 8mm; height: 8mm; border-radius: 50%; background: var(--c); color: #fff; font-weight: 800; font-size: 11pt; display: grid; place-items: center; }
+    h2 { font-size: 13pt; font-weight: 800; letter-spacing: .12em; margin: 6mm 0 2.5mm; color: #15151C; }
+    td:last-child { white-space: nowrap; }
+    table { width: 100%; border-collapse: collapse; font-size: 10.5pt; }
+    th { text-align: left; font-size: 8pt; letter-spacing: .14em; color: #6B6B78; padding: 2mm 2.5mm; border-bottom: .5mm solid #15151C; }
+    td { padding: 3mm 2.5mm; border-bottom: .3mm solid #E1E1E8; vertical-align: top; line-height: 1.35; }
+    td.lv { font-weight: 800; white-space: nowrap; }
+    td.lv span { display: inline-block; width: 3mm; height: 3mm; border-radius: 50%; margin-right: 2mm; vertical-align: 0; }
+    .pts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; }
+    .pt { background: #F4F4F8; border-radius: 3mm; padding: 3.5mm; text-align: center; }
+    .pt b { display: block; font-size: 17pt; font-weight: 800; color: var(--c); }
+    .pt span { font-size: 9pt; color: #44444F; line-height: 1.3; display: block; margin-top: 1mm; }
+    .note { margin-top: 4mm; font-size: 10pt; color: #44444F; line-height: 1.45; }
+    .foot { margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; border-top: .3mm solid #E1E1E8; padding-top: 4mm; font-size: 10pt; color: #44444F; }
+    .foot .big { font-family: Fredoka, Inter, sans-serif; font-size: 18pt; color: #15151C; }
+    .foot .ig { font-weight: 800; color: var(--c); }
+    @media print { body { background: #fff; } .bar { display: none; } .page { margin: 0; } }
+  </style>
+</head>
+<body>
+  <div class="bar">A4 guide for the booth · 2 pages (one per game) <button onclick="print()">🖨 Print</button></div>
+
+  <!-- ===== Page 1: Animal Peekaboo ===== -->
+  <section class="page" style="--c:#FF5A5F">
+    <div class="band"></div>
+    <div class="brand"><span class="casio">CASIO</span><span class="ev">HORNBILL FESTIVAL · CASIO BOOTH · GAME ZONE</span></div>
+    <h1><small>GAME 1 · 30 SECONDS</small>Animal Peekaboo</h1>
+    <p class="lead">An animal sings a little tune. Listen — then play it back on the CASIO keyboard!</p>
+    <div class="row">
+      <img class="shot" src="img/howto_peekaboo.png" alt="">
+      <ol class="steps">
+        <li>Type a <b>nickname</b>, choose a <b>level</b>, tap <b>▶ Start</b>.</li>
+        <li>An animal peeks out and <b>sings</b>. Just listen — the clock stops while it sings.</li>
+        <li><b>“Your turn!”</b> Play the same notes, in the same order.</li>
+        <li>Right → next tune. Wrong → you see the answer and get a new tune.</li>
+        <li>Clear as many tunes as you can in <b>30 seconds</b>!</li>
+      </ol>
+    </div>
+    <h2>LEVELS</h2>
+    <table>
+      <thead><tr><th>LEVEL</th><th>FOR WHO</th><th>WHAT YOU PLAY</th><th>GRADE</th></tr></thead>
+      <tbody>
+        <tr><td class="lv"><span style="background:#FF7F3F"></span>Beginner</td><td>New to keyboards</td><td>Single notes, white keys only. Animals on the keys.</td><td>★★★ 700+<br>★★ 350+</td></tr>
+        <tr><td class="lv"><span style="background:#2FA4E7"></span>Intermediate</td><td>You know Do-Re-Mi and the black keys</td><td>Melodies with black keys, 2- and 3-note chords</td><td>S 1300 · A 900<br>B 500</td></tr>
+        <tr><td class="lv"><span style="background:#7B61FF"></span>Advanced</td><td>You can play chords from their names</td><td>Chord progressions from names (C, Am, G7…). Last stage: names hidden!</td><td>S 1000 · A 700<br>B 400</td></tr>
+      </tbody>
+    </table>
+    <h2>POINTS</h2>
+    <div class="pts">
+      <div class="pt"><b>10 / 15 / 20</b><span>1 note / 2-note chord / 3-note chord</span></div>
+      <div class="pt"><b>+50</b><span>tune cleared</span></div>
+      <div class="pt"><b>+30</b><span>no miss in the tune</span></div>
+      <div class="pt"><b>×2</b><span>combo bonus (max)</span></div>
+    </div>
+    <p class="note">No points are taken away for a wrong key. 🔁 <b>Listen again</b> can be used once per tune.</p>
+    <div class="foot"><div><div class="big">🏆 Today’s #1 of each level</div>is posted on <span class="ig">CASIO’s Instagram</span> (only if you say OK).</div><div style="text-align:right">Ranking = your best score today, per level.</div></div>
+  </section>
+
+  <!-- ===== Page 2: Piano Challenge ===== -->
+  <section class="page" style="--c:#2546FF">
+    <div class="band"></div>
+    <div class="brand"><span class="casio">CASIO</span><span class="ev">HORNBILL FESTIVAL · CASIO BOOTH · GAME ZONE</span></div>
+    <h1><small>GAME 2 · 1 MINUTE</small>Piano Challenge</h1>
+    <p class="lead">Read the score and play a whole song before the time runs out!</p>
+    <div class="row">
+      <img class="shot" src="img/howto_piano.png" alt="">
+      <ol class="steps">
+        <li>Type a <b>nickname</b>, choose a <b>level</b> and a <b>song</b>, tap <b>▶ Start</b>.</li>
+        <li>The <b style="color:#2546FF">blue note</b> on the score is the one to play now.</li>
+        <li>Beginner / Intermediate: the next <b>key lights up</b>.</li>
+        <li>A chord = press all its notes together (any order).</li>
+        <li>Finish the song in <b>1 minute</b>. A wrong key is a miss — keep going!</li>
+      </ol>
+    </div>
+    <h2>LEVELS</h2>
+    <table>
+      <thead><tr><th>LEVEL</th><th>SONGS</th><th>HANDS / HELP</th></tr></thead>
+      <tbody>
+        <tr><td class="lv"><span style="background:#12A150"></span>Beginner</td><td>Mary Had a Little Lamb · Jingle Bells · Twinkle Twinkle Little Star</td><td>Right hand, white keys · animals + key lights</td></tr>
+        <tr><td class="lv"><span style="background:#2546FF"></span>Intermediate</td><td>Ode to Joy · Happy Birthday · We Wish You a Merry Christmas</td><td>Both hands (left hand 1 note) · key lights + names</td></tr>
+        <tr><td class="lv"><span style="background:#E5383B"></span>Advanced</td><td>Für Elise · In the Hall of the Mountain King · Turkish March</td><td>Both hands with chords · no lights, no names</td></tr>
+      </tbody>
+    </table>
+    <h2>POINTS &amp; GRADE</h2>
+    <div class="pts">
+      <div class="pt"><b>+10</b><span>each note</span></div>
+      <div class="pt"><b>+300</b><span>song finished</span></div>
+      <div class="pt"><b>+10 / s</b><span>for each second left</span></div>
+      <div class="pt"><b>+200</b><span>no misses</span></div>
+    </div>
+    <p class="note"><b>Grade:</b> S = finished with 0 misses · A = 3 misses or fewer · B = finished · C = not finished.</p>
+    <div class="foot"><div><div class="big">🏆 Today’s #1 of each level</div>is posted on <span class="ig">CASIO’s Instagram</span> (only if you say OK).</div><div style="text-align:right">Ranking = your best score today, per level.</div></div>
+  </section>
+</body>
+</html>

@@ -47,6 +47,32 @@
     .back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 18px; font-weight: 600; font-size: .9rem; color: var(--ink); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; }
     .back:hover { background: var(--surface); }
 
+    /* ---------- Game Zone: staff strip + shared Staff settings (used by BOTH games) ---------- */
+    .staff-strip { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 18px; padding: 12px 14px; border: 1px dashed #D9D9E2; border-radius: 16px; font-size: .82rem; color: var(--muted); }
+    .staff-strip .links { display: flex; gap: 8px; flex-wrap: wrap; }
+    .sbtn { font: 600 .85rem 'Inter', sans-serif; color: var(--ink); background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+    .sbtn:hover { background: var(--surface); }
+    .ov { position: fixed; inset: 0; z-index: 80; background: rgba(17,17,22,.45); display: grid; place-items: center; padding: 16px; }
+    .dlg { width: min(540px, 100%); max-height: 92vh; overflow-y: auto; background: #fff; border-radius: 22px; padding: 22px; }
+    .dlg h3 { font-size: 1.3rem; font-weight: 800; }
+    .dlg p { color: var(--muted); font-size: .88rem; line-height: 1.5; margin-top: 4px; }
+    .dlg label { display: block; font-size: .8rem; font-weight: 700; margin: 14px 0 5px; }
+    .dlg input, .dlg select { width: 100%; font: 1rem 'Inter', sans-serif; padding: 11px 12px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--ink); }
+    .dlg .rowb { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+    .dlg .b { font: 700 .92rem 'Inter', sans-serif; border: 0; border-radius: 12px; padding: 12px 16px; background: var(--ink); color: #fff; cursor: pointer; }
+    .dlg .b.sub { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+    .dlg .b.danger { background: #E5383B; }
+    .dlg .b:disabled { opacity: .4; cursor: default; }
+    .dlg .err { color: #E5383B; font-size: .86rem; min-height: 1.2em; margin-top: 8px; line-height: 1.4; }
+    .dlg .err.okm { color: #12A150; }
+    .dlg hr { border: 0; border-top: 1px solid var(--line); margin: 18px 0 4px; }
+    .stbl { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: .86rem; }
+    .stbl th, .stbl td { text-align: left; padding: 7px 6px; border-bottom: 1px solid var(--line); }
+    .stbl th { font-size: .7rem; letter-spacing: .1em; color: var(--muted); }
+    .stbl td.n, .stbl th.n { text-align: right; font-variant-numeric: tabular-nums; }
+    .stbl td.n { font-weight: 700; }
+    .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 90; background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 14px; font-size: .9rem; max-width: calc(100% - 32px); }
+
     @media (max-width: 900px) { .modes { grid-template-columns: 1fr; } .grid { grid-template-columns: 1fr 1fr; } .card, .card.wide { grid-column: span 1; } header { flex-direction: column; align-items: flex-start; } .lead { text-align: left; } }
     @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
   </style>
@@ -112,11 +138,61 @@
             <div class="row"><span class="level" style="background:#E0E6FF;color:#2546FF">GAME · ALL LEVELS</span><span class="num">G2</span></div>
             <h2>Piano Challenge</h2>
             <p>Read the score and play a whole song before time runs out — from Jingle Bells to Für Elise.</p>
-            <div class="inputs"><span>CASIO keyboard</span><span>PC keys</span><span>Touch</span><span>10 songs</span></div>
+            <div class="inputs"><span>CASIO keyboard</span><span>Touch</span><span>9 songs</span><span>1 minute</span></div>
           </div>
         </a>
       </div>
+      <div class="staff-strip">
+        <span id="gz-device">For staff</span>
+        <div class="links">
+          <a class="sbtn" href="howto_print.html" target="_blank" rel="noopener">🖨 Printable guide</a>
+          <a class="sbtn" href="winners.html">📸 Instagram winners</a>
+          <button class="sbtn" id="open-staff">⚙ Staff settings</button>
+        </div>
+      </div>
     </section>
+
+    <!-- ===== Staff settings (shared by Animal Peekaboo + Piano Challenge; kept on this device) ===== -->
+    <div class="ov hidden" id="staff">
+      <div class="dlg">
+        <div id="st-lock">
+          <h3>⚙ Staff settings</h3>
+          <p>For staff only. Enter the key to open.</p>
+          <label for="st-unlock">Key</label>
+          <input id="st-unlock" type="password" autocomplete="off" autocapitalize="off" spellcheck="false">
+          <div class="err" id="st-lock-err"></div>
+          <div class="rowb"><button class="b" id="st-open">🔓 Open</button><button class="b sub" data-close>Close</button></div>
+        </div>
+        <div id="st-main" class="hidden">
+          <h3>⚙ Staff settings</h3>
+          <p>One place for both games (Animal Peekaboo + Piano Challenge). Kept on this device.</p>
+          <label for="st-device">This device</label>
+          <select id="st-device"><option>device-1</option><option>device-2</option><option>device-3</option><option>device-4</option></select>
+          <label for="st-url">Score sheet URL (ends with /exec)</label>
+          <input id="st-url" type="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec">
+          <label for="st-key">Key</label>
+          <input id="st-key" type="password" autocomplete="off" autocapitalize="off" spellcheck="false">
+          <div class="err" id="st-err"></div>
+          <div class="rowb"><button class="b" id="st-save">💾 Save</button><button class="b sub" id="st-test">📶 Test connection</button><button class="b sub" data-close>Close</button></div>
+          <hr>
+          <label>Scores on this device</label>
+          <table class="stbl"><thead><tr><th>GAME</th><th class="n">SAVED</th><th class="n">TODAY</th><th class="n">WAITING</th></tr></thead><tbody id="st-info"></tbody></table>
+          <div class="rowb">
+            <button class="b sub" id="st-send">📤 Send waiting scores</button>
+            <button class="b sub" id="st-csv">⬇ Scores CSV</button>
+            <button class="b sub" id="st-log">⬇ Log CSV</button>
+            <button class="b danger" id="st-del">🗑 Delete history…</button>
+          </div>
+          <p style="margin-top:10px;font-size:.8rem">Scores CSV = all plays of both games on this device in one table, with a <b>game</b> column (same as the Google Sheet).</p>
+        </div>
+      </div>
+    </div>
+    <div class="ov hidden" id="st-confirm" style="z-index:85">
+      <div class="dlg">
+        <h3 id="stc-title"></h3><p id="stc-text"></p>
+        <div class="rowb"><button class="b danger" id="stc-yes">🗑 Delete</button><button class="b sub" id="stc-no">Cancel</button></div>
+      </div>
+    </div>
 
     <!-- ===== Music Lab (everything that is not a game) ===== -->
     <section class="view hidden" id="v-explore">
@@ -639,7 +715,7 @@
         s += `<line x1="${x + sp * .56}" x2="${x + sp * .56}" y1="${y}" y2="${y - sp * 3}" stroke="${c}" stroke-width="1.5"/>`;
       });
       ['★', '★★', '★★★'].forEach((t, i) => s += `<text x="${40 + i * 70}" y="146" font-size="15" fill="${['#12A150', '#2546FF', '#E5383B'][i]}">${t}</text>`);
-      s += `<text x="336" y="146" text-anchor="end" font-size="22" font-weight="800" font-family="Inter, sans-serif" fill="#111116">0:40</text>`;
+      s += `<text x="336" y="146" text-anchor="end" font-size="22" font-weight="800" font-family="Inter, sans-serif" fill="#111116">1:00</text>`;
       document.getElementById('art-challenge').innerHTML = svg(s);
     })();
 
@@ -660,11 +736,153 @@
        Hash links (not separate pages) so "← Menu" on each page can come back to the right list
        and the browser / iPad back gesture still works. Unknown hash → home. */
     function showView() {
-      const v = { '#games': 'v-games', '#explore': 'v-explore' }[location.hash] || 'v-home';
+      const v = { '#games': 'v-games', '#staff': 'v-games', '#explore': 'v-explore' }[location.hash] || 'v-home';
       document.querySelectorAll('.view').forEach(el => el.classList.toggle('hidden', el.id !== v));
       window.scrollTo(0, 0);
+      if (location.hash === '#staff') openStaff();   // the "⚙ Staff settings" links inside the games come here
     }
     addEventListener('hashchange', showView);
+
+    /* =====================================================================
+       Staff settings — ONE place for both games.
+       Uses the same localStorage keys the games read: peekaboo.settings (device / URL / key)
+       and peekaboo.* / piano.* (history, queue, log). The key is never written to a log or CSV.
+       ===================================================================== */
+    const $ = id => document.getElementById(id);
+    const store = {
+      get(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } },
+      set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+    };
+    const GAMES = { peekaboo: 'Animal Peekaboo', piano: 'Piano Challenge' };
+    const DEVICES = ['device-1', 'device-2', 'device-3', 'device-4'];
+    // old names (Booth-1 …) are read as device-1 …
+    const cfg = () => { const c = store.get('peekaboo.settings', { device: 'device-1', url: '', key: '' }); c.device = String(c.device || 'device-1').replace(/^booth-(\d)$/i, 'device-$1'); return c; };
+    const todayStr = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    function oplog(action, target, result, detail, ms) {
+      try {
+        const now = new Date();
+        const row = { ts_utc: now.toISOString(), ts_local: now.toLocaleString(), device: cfg().device, page: 'gamezone', action, target: target || '', result: result || 'success', detail: detail || '', ms: ms || 0, ua: navigator.userAgent.slice(0, 80) };
+        store.set('gamezone.log', store.get('gamezone.log', []).concat(JSON.stringify(row)).slice(-500));
+      } catch (e) { /* a logging failure never stops the page */ }
+    }
+    let toastT = 0;
+    function toast(msg, ms = 3000) { let t = $('st-toast'); if (!t) { t = document.createElement('div'); t.id = 'st-toast'; t.className = 'toast'; document.body.appendChild(t); } t.textContent = msg; t.classList.remove('hidden'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.add('hidden'), ms); }
+    function api(method, params, body, c = cfg()) {
+      const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 12000);
+      const url = c.url + (params ? '?' + new URLSearchParams(params) : '');
+      return fetch(url, method === 'POST' ? { method, body: JSON.stringify(body), signal: ctl.signal } : { signal: ctl.signal })
+        .then(r => r.json()).finally(() => clearTimeout(t));
+    }
+    function showDevice() { $('gz-device').textContent = 'For staff · this iPad is ' + cfg().device + (cfg().url ? ' · online ranking ON' : ' · online ranking not set up'); }
+
+    function staffInfo() {
+      $('st-info').innerHTML = Object.entries(GAMES).map(([g, name]) => {
+        const h = store.get(g + '.history', []), q = store.get(g + '.queue', []);
+        return `<tr><td>${name}</td><td class="n">${h.length}</td><td class="n">${h.filter(x => x.date === todayStr()).length}</td><td class="n">${q.length}</td></tr>`;
+      }).join('');
+    }
+    function openStaff() {
+      const c = cfg();
+      $('st-unlock').value = ''; $('st-lock-err').textContent = '';
+      // once a key is saved, the dialog asks for it first, so guests at the booth cannot change or delete anything
+      $('st-lock').classList.toggle('hidden', !c.key); $('st-main').classList.toggle('hidden', !!c.key);
+      fillStaff(); $('staff').classList.remove('hidden');
+      if (c.key) setTimeout(() => $('st-unlock').focus(), 50);
+      oplog('open_settings', 'settings', 'success');
+    }
+    function fillStaff() { const c = cfg(); $('st-device').value = DEVICES.includes(c.device) ? c.device : 'device-1'; $('st-url').value = c.url; $('st-key').value = c.key; $('st-err').className = 'err'; $('st-err').textContent = ''; staffInfo(); }
+    function closeStaff() { $('staff').classList.add('hidden'); if (location.hash === '#staff') history.replaceState(null, '', '#games'); }
+    $('open-staff').onclick = openStaff;
+    document.querySelectorAll('[data-close]').forEach(b => b.onclick = closeStaff);
+    $('st-open').onclick = () => {
+      if ($('st-unlock').value.trim() !== cfg().key) { $('st-lock-err').textContent = 'Wrong key. Ask the person who set up the score sheet.'; oplog('unlock_settings', 'settings', 'failed', 'wrong key'); return; }
+      $('st-lock').classList.add('hidden'); $('st-main').classList.remove('hidden'); oplog('unlock_settings', 'settings', 'success');
+    };
+    $('st-unlock').addEventListener('keydown', e => { if (e.key === 'Enter') $('st-open').click(); });
+    function readForm() {
+      const url = $('st-url').value.trim(), key = $('st-key').value.trim();
+      if (url && !/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(url)) return { err: 'The URL must start with https://script.google.com/macros/s/ and end with /exec. Copy it again from Apps Script → Deploy → Manage deployments.' };
+      if (url && !key) return { err: 'Enter the key that was set in Apps Script (Script properties → KEY).' };
+      return { c: { device: $('st-device').value, url, key } };
+    }
+    function stMsg(text, ok) { $('st-err').className = 'err' + (ok ? ' okm' : ''); $('st-err').textContent = text; }
+    $('st-save').onclick = () => {
+      const f = readForm(); if (f.err) return stMsg(f.err);
+      const before = cfg(), ok = store.set('peekaboo.settings', f.c);
+      oplog('save_settings', 'settings', ok ? 'success' : 'failed', `device ${before.device} → ${f.c.device}, online ${f.c.url ? 'yes' : 'no'}`);
+      if (!ok) return stMsg('This browser blocked saving. Turn off private mode or use another browser.');
+      showDevice(); toast('✓ Settings saved — both games use them now'); closeStaff();
+    };
+    $('st-test').onclick = async () => {
+      const f = readForm(); if (f.err) return stMsg(f.err);
+      if (!f.c.url) return stMsg('Enter the score sheet URL first.');
+      stMsg('Testing…');
+      const t0 = performance.now();
+      try {
+        const r = await api('GET', { action: 'ping' }, null, f.c), ms = Math.round(performance.now() - t0);
+        const v = Number(r.version) || 1, games = Array.isArray(r.games) ? r.games : [];
+        if (!r.ok) stMsg('The sheet answered with an error: ' + r.error);
+        else if (v < 4) stMsg(`Connected, but the sheet is version ${v}. Paste the new Code.gs (v4) and deploy a New version.`);
+        else stMsg(`✓ Connected (sheet v${v}, games: ${games.join(', ')}) · ${ms} ms. The key is checked when the first score is sent.`, true);
+        oplog('test_connection', 'sheet', r.ok ? 'success' : 'failed', 'v' + v, ms);
+      } catch (e) {
+        stMsg('Could not reach the sheet. Check the internet and the URL.');
+        oplog('test_connection', 'sheet', 'failed', e.name === 'AbortError' ? 'timeout' : e.message, Math.round(performance.now() - t0));
+      }
+    };
+    // send every waiting score of both games (the games also try by themselves)
+    $('st-send').onclick = async () => {
+      const c = cfg(); if (!c.url) return stMsg('Save the score sheet URL first.');
+      $('st-send').disabled = true; let sent = 0, left = 0, wrongKey = false;
+      for (const g of Object.keys(GAMES)) {
+        for (const play of store.get(g + '.queue', [])) {
+          const t0 = performance.now();
+          try {
+            const r = await api('POST', null, Object.assign({ key: c.key, game: g }, play));
+            if (r.ok) { store.set(g + '.queue', store.get(g + '.queue', []).filter(p => p.id !== play.id)); sent++; oplog('send_score', play.nickname, 'success', `${g} ${play.level} ${play.score}`, Math.round(performance.now() - t0)); }
+            else { left++; if (r.error === 'wrong key') wrongKey = true; oplog('send_score', play.nickname, 'failed', r.error, Math.round(performance.now() - t0)); }
+          } catch (e) { left++; oplog('send_score', play.nickname, 'failed', e.name === 'AbortError' ? 'timeout' : e.message, Math.round(performance.now() - t0)); }
+        }
+      }
+      $('st-send').disabled = false; staffInfo();
+      toast(wrongKey ? 'The key is wrong — fix the key and try again.' : left ? `${sent} sent, ${left} still waiting — check the internet and try again.` : `✓ All waiting scores sent (${sent})`, 4000);
+    };
+    const csvCell = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+    function download(name, lines) {
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv' }));
+      a.download = name; a.click();
+    }
+    // ONE flat table for both games, with a "game" column (same idea as the Google Sheet)
+    $('st-csv').onclick = () => {
+      const cols = ['game', 'id', 'ts', 'date', 'device', 'nickname', 'level', 'variant', 'score', 'rankLetter', 'cleared', 'maxCombo', 'accuracy', 'input'];
+      const rows = Object.keys(GAMES).flatMap(g => store.get(g + '.history', []).map(h => Object.assign({}, h, { game: g })))
+        .sort((a, b) => String(a.ts).localeCompare(String(b.ts))).map(h => cols.map(c => csvCell(h[c])).join(','));
+      download(`gamezone_scores_${cfg().device}_${todayStr()}.csv`, [cols.join(','), ...rows]);
+      oplog('export_csv', 'history', 'success', rows.length + ' rows');
+    };
+    // operation log of both games + this page + winners, in one CSV (for checking who did what)
+    $('st-log').onclick = () => {
+      const cols = ['ts_utc', 'ts_local', 'device', 'user', 'page', 'action', 'target', 'result', 'detail', 'ms', 'ua'];
+      const lines = ['peekaboo.log', 'piano.log', 'gamezone.log'].flatMap(k => store.get(k, []))
+        .concat((localStorage.getItem('winners.log') || '').split('\n').filter(Boolean))
+        .map(l => { try { return JSON.parse(l); } catch (e) { return null; } }).filter(Boolean)
+        .sort((a, b) => String(a.ts_utc).localeCompare(String(b.ts_utc)));
+      download(`gamezone_log_${cfg().device}_${todayStr()}.csv`, [cols.join(','), ...lines.map(r => cols.map(c => csvCell(r[c])).join(','))]);
+      oplog('export_log', 'log', 'success', lines.length + ' lines');
+    };
+    $('st-del').onclick = () => {
+      const q = Object.keys(GAMES).reduce((n, g) => n + store.get(g + '.queue', []).length, 0);
+      $('stc-title').textContent = 'Delete this device’s history?';
+      $('stc-text').textContent = `All plays of both games saved on this device will be removed${q ? `, including ${q} score(s) not sent yet` : ''}. Scores already in the Google Sheet stay there. Download the CSV first if you need it. This cannot be undone.`;
+      $('st-confirm').classList.remove('hidden');
+    };
+    $('stc-no').onclick = () => $('st-confirm').classList.add('hidden');
+    $('stc-yes').onclick = () => {
+      const n = Object.keys(GAMES).reduce((s, g) => s + store.get(g + '.history', []).length, 0);
+      Object.keys(GAMES).forEach(g => { store.set(g + '.history', []); store.set(g + '.queue', []); });
+      $('st-confirm').classList.add('hidden'); oplog('delete_history', 'history', 'success', n + ' plays'); staffInfo(); toast('History deleted');
+    };
+    showDevice();
     showView();
   </script>
 </body>
