@@ -29,6 +29,12 @@
  *     The log keeps who / when / how many rows — never the ID itself.
  *   Deploy the same way (Edit → New version), the URL stays the same.
  *
+ * v4.1 (2026-11-25): Instagram consent is per PLAYER per day (not per row).
+ *   Before: only the row with the player's best score was checked, so an OK given on another play
+ *   (e.g. same score twice, or a higher score earlier without OK) was missed on winners.html.
+ *   Now: if the player said OK on ANY play today in that game, the card uses it (the newest OK wins).
+ *   "unconsent" also finds that ID when the best row itself has none.
+ *
  * Setup (once):
  *   1. Create a new Google Sheet → Extensions → Apps Script → paste this file.
  *   2. Project Settings → Script properties → add  KEY = <any secret word, e.g. 8+ letters>.
@@ -71,7 +77,7 @@ function doGet(e) {
   const t0 = Date.now(), p = (e && e.parameter) || {};
   try {
     // "games" tells new pages that this server understands the game column (v2)
-    if (p.action === 'ping') return json_({ ok: true, time: new Date().toISOString(), version: 4, games: GAMES });
+    if (p.action === 'ping') return json_({ ok: true, time: new Date().toISOString(), version: 4, build: '4.1', games: GAMES });
     // nickname check: answers only yes/no (no scores, no devices)
     if (p.action === 'nick') {
       const n = clean_(p.nickname, 10).toLowerCase(), game = game_(p.game), date = today_(), c = name => PLAY_HEAD.indexOf(name);
@@ -155,21 +161,23 @@ function playRows_() {
   const sh = sheet_('plays', PLAY_HEAD);
   return sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, PLAY_HEAD.length).getValues() : [];
 }
-// best row per nickname (internal: also keeps the row's id and Instagram consent)
+// best row per nickname (internal: also keeps the row's id and the player's Instagram consent)
+// Consent = per player for the day in this game: an OK given on ANY of their plays counts (rows are in send order → newest OK wins).
 function bestRows_(rows, game, level, date, includeTest) {
   const c = name => PLAY_HEAD.indexOf(name);
-  const best = {};
+  const best = {}, okId = {};
   rows.forEach(r => {
-    if (cell_(r[c('date')], 'yyyy-MM-dd') !== date || r[c('level')] !== level) return;
-    if (game_(String(r[c('game')] || '')) !== game) return;   // empty (old rows) → peekaboo
+    if (cell_(r[c('date')], 'yyyy-MM-dd') !== date || game_(String(r[c('game')] || '')) !== game) return;   // empty game (old rows) → peekaboo
     if (!includeTest && r[c('is_test')] === true) return;
-    const n = String(r[c('nickname')]), s = Number(r[c('score')]);
+    const n = String(r[c('nickname')]);
+    if (r[c('insta_ok')] === true && String(r[c('insta')] || '')) okId[n.toLowerCase()] = String(r[c('insta')]);   // any level counts
+    if (r[c('level')] !== level) return;
+    const s = Number(r[c('score')]);
     if (!best[n] || s > best[n].score) best[n] = { nickname: n, score: s, device: r[c('device')],
       time: cell_(r[c('ts_local')], 'yyyy-MM-dd HH:mm:ss').slice(11, 16), id: String(r[c('id')]),
-      variant: String(r[c('variant')] || ''), accuracy: Number(r[c('accuracy')]) || 0,
-      insta: r[c('insta_ok')] === true ? String(r[c('insta')] || '') : '' };
+      variant: String(r[c('variant')] || ''), accuracy: Number(r[c('accuracy')]) || 0 };
   });
-  return Object.values(best).sort((a, b) => b.score - a.score);
+  return Object.values(best).map(b => Object.assign(b, { insta: okId[b.nickname.toLowerCase()] || '' })).sort((a, b) => b.score - a.score);
 }
 
 /* ---------- Instagram (v3) ---------- */
@@ -228,7 +236,13 @@ function unconsent_(d, t0) {
     const vals = sh.getRange(2, 1, sh.getLastRow() - 1, PLAY_HEAD.length).getValues();
     const hit = vals.find(r => String(r[cid]) === String(d.playId));
     if (!hit) { log_('unconsent', d.device, d.playId, 'failed', 'play not found', Date.now() - t0); return json_({ ok: false, error: 'play not found' }); }
-    const insta = String(hit[ci] || '').toLowerCase();
+    // the best row may have no ID (the OK was given on another play) → use the newest OK of the same player, same day, same game
+    let insta = String(hit[ci] || '').toLowerCase();
+    if (!insta) {
+      const c = name => PLAY_HEAD.indexOf(name), nick = String(hit[c('nickname')]).toLowerCase(), day = cell_(hit[c('date')], 'yyyy-MM-dd'), g = game_(String(hit[c('game')] || ''));
+      vals.forEach(r => { if (r[ci + 1] === true && String(r[ci] || '') && String(r[c('nickname')]).toLowerCase() === nick &&
+        cell_(r[c('date')], 'yyyy-MM-dd') === day && game_(String(r[c('game')] || '')) === g) insta = String(r[ci]).toLowerCase(); });
+    }
     vals.forEach((r, i) => {
       const same = String(r[cid]) === String(d.playId) || (insta && String(r[ci] || '').toLowerCase() === insta);
       if (same && (r[ci] !== '' || r[ci + 1] === true)) { sh.getRange(i + 2, ci + 1, 1, 2).setValues([['', false]]); rows++; }

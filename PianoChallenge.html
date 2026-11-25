@@ -398,7 +398,6 @@
       <button class="howto-btn" id="open-howto">❓ How to play</button>
       <div class="step"><b>1</b>YOUR NICKNAME</div>
       <input id="nick" maxlength="10" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Up to 10 letters (no real names)">
-      <div class="chips" id="recent"></div>
       <div class="err" id="nick-err"></div>
       <div class="dup hidden" id="nick-dup"></div>
       <div class="step"><b>2</b>CHOOSE A LEVEL</div>
@@ -1217,6 +1216,7 @@
       playing = true; paused = false; document.body.classList.add('playing'); showTarget();
       t0 = performance.now(); startedAt = Date.now();
       oplog('start_game', LEVEL, 'success', `${NICK} · ${CUR.id}`);
+      shownPlay = ''; warmUp('game start');
       timer = setInterval(() => {
         if (paused) return;
         timeLeft = TIME_LIMIT - (performance.now() - t0) / 1000;
@@ -1377,11 +1377,8 @@
     /* ---------- Nickname ---------- */
     let NICK = pref.nick || '';
     const cleanNick = v => v.replace(/[\r\n\t<>]/g, '').replace(/^[=+\-@]+/, '').trim().slice(0, 10);
-    function renderRecent() {
-      const nicks = store.get(K.nicks, []);
-      $('recent').innerHTML = nicks.map(n => `<button class="chip" data-n="${esc(n)}">${esc(n)}</button>`).join('');
-      $('recent').querySelectorAll('.chip').forEach(c => c.onclick = () => { $('nick').value = c.dataset.n; $('nick-err').textContent = ''; $('nick-dup').classList.add('hidden'); });
-    }
+    // Recent-name buttons were removed (2026-11-25): the next guest must not see earlier players' names.
+    function renderRecent() { try { localStorage.removeItem(K.nicks); } catch (e) {} }
     $('nick').addEventListener('input', () => { $('nick-err').textContent = ''; $('nick-dup').classList.add('hidden'); });
     /* Nickname check: the same name twice today would mix two players' scores */
     let nickOK = '', checking = false;   // nickOK = the name that just played, or that the player said "It's me" for
@@ -1408,7 +1405,7 @@
       if (counting || checking) return;
       const n = cleanNick($('nick').value);
       if (!n) {
-        $('nick-err').textContent = 'Type a nickname first (up to 10 letters)' + (store.get(K.nicks, []).length ? ' — or tap a name above.' : '.');
+        $('nick-err').textContent = 'Type a nickname first (up to 10 letters).';
         $('nick').focus(); $('nick').scrollIntoView({ block: 'center', behavior: 'smooth' }); return;
       }
       $('nick-dup').classList.add('hidden');
@@ -1419,7 +1416,6 @@
         if (taken) { oplog('check_nick', n, 'failed', 'already used today'); showDup(n); return; }
       }
       nickOK = n; NICK = n; pref.nick = n; savePref();
-      store.set(K.nicks, [n].concat(store.get(K.nicks, []).filter(x => x !== n)).slice(0, 6));
       $('nick').blur(); AC.resume(); countdown();
     }
 
@@ -1515,25 +1511,54 @@
       // Try again / Change are grey while the ranking is checked (max RANK_WAIT_MS), so nobody skips the Instagram box by accident.
       // Offline → no check, no Instagram box; the score stays on this device and is sent later.
       lockResult(true, 'Checking today’s ranking…');
+      shownPlay = play.id;
       const t0 = performance.now();
       const ask = (async () => {
         for (let w = 0; flushing && w < 25; w++) await new Promise(ok => setTimeout(ok, 200));   // a background send may still be running
         return cfg().url && navigator.onLine !== false ? await flushQueue(play.id) : null;
       })();
-      let r = await Promise.race([ask, new Promise(ok => setTimeout(() => ok('timeout'), RANK_WAIT_MS))]);
-      if (r === 'timeout') { oplog('read_rank', LEVEL, 'failed', 'no answer in ' + RANK_WAIT_MS + ' ms (score is still sent in the background)', Math.round(performance.now() - t0)); r = null; }
-      you.className = 'you';
-      if (r && r.ok) { you.textContent = `🏆 You are #${r.rank} of ${r.total} today (${Lname})` + (r.best > play.score ? ` · your best is ${r.best.toLocaleString()}` : '');
-        // Instagram box: only top 3, and only when THIS play is the player's best (the ID is saved on this play's row)
-        if (sc.total > 0 && r.rank >= 1 && r.rank <= 3 && !(r.best > play.score)) igShow(play); }
-      else {
-        const list = localRanking(LEVEL), me = list.findIndex(p => p.nickname === NICK) + 1;
-        you.textContent = `🏆 You are #${me} of ${list.length} on this device today (${Lname})` + (cfg().url ? ' · score saved, it will be sent later' : '');
-      }
-      if (!IG.open) lockResult(false);   // no Instagram box → the buttons work again at once
+      // the sheet's answer → rank line + (top 3) Instagram box
+      const showRank = (r, late) => {
+        you.className = 'you';
+        if (r && r.ok) { you.textContent = `🏆 You are #${r.rank} of ${r.total} today (${Lname})` + (r.best > play.score ? ` · your best is ${r.best.toLocaleString()}` : '');
+          // Instagram box: only top 3, and only when THIS play is the player's best (the ID is saved on this play's row)
+          if (sc.total > 0 && r.rank >= 1 && r.rank <= 3 && !(r.best > play.score)) igShow(play);
+          if (late) oplog('read_rank', LEVEL, 'success', 'late answer #' + r.rank, Math.round(performance.now() - t0));
+        } else {
+          const list = localRanking(LEVEL), me = list.findIndex(p => p.nickname === NICK) + 1;
+          you.textContent = `🏆 You are #${me} of ${list.length} on this device today (${Lname})` + (!cfg().url ? '' : navigator.onLine === false ? ' · saved on this device, it will be sent when the internet is back' : ' · score saved, it will be sent later');
+        }
+        if (!IG.open) lockResult(false);   // no Instagram box → the buttons work again at once
+      };
+      const r = await Promise.race([ask, new Promise(ok => setTimeout(() => ok('timeout'), RANK_WAIT_MS))]);
+      if (r !== 'timeout') return showRank(r, false);
+      // slow sheet: free the buttons now, keep listening. If the answer comes while THIS result is still on screen, show it then.
+      oplog('read_rank', LEVEL, 'failed', 'no answer in ' + RANK_WAIT_MS + ' ms (still waiting in the background)', Math.round(performance.now() - t0));
+      const list = localRanking(LEVEL), me = list.findIndex(p => p.nickname === NICK) + 1;
+      you.className = 'you'; you.textContent = `🏆 You are #${me} of ${list.length} on this device today (${Lname}) · the online ranking is slow — still checking…`;
+      lockResult(false);
+      ask.then(late => {
+        if (shownPlay !== play.id || $('result-screen').classList.contains('hidden')) { oplog('read_rank', LEVEL, 'late', 'answer came after the player left', Math.round(performance.now() - t0)); return; }
+        showRank(late, true);
+      });
     }
 
-    const RANK_WAIT_MS = 5000;   // longest time the result buttons wait for the sheet
+    const RANK_WAIT_MS = 5000;   // longest time the result buttons wait for the sheet (a late answer can still show the Instagram box)
+    let shownPlay = '';          // id of the play whose result is on screen now
+    /* ---------- Warm-up: Apps Script answers slowly the first time after a quiet spell (several seconds).
+       A tiny "ping" when the page opens, when a game starts and every 4 min wakes it up, so the ranking
+       after the game comes back quickly. The ping sends nothing about the player. ---------- */
+    let lastWarm = 0;
+    function warmUp(why) {
+      const c = cfg();
+      if (!c.url || navigator.onLine === false || document.hidden || Date.now() - lastWarm < 60000) return;
+      lastWarm = Date.now(); const t0 = performance.now();
+      fetch(c.url + '?action=ping').then(r => r.json())
+        .then(() => oplog('warm_up', why, 'success', '', Math.round(performance.now() - t0)))
+        .catch(e => oplog('warm_up', why, 'failed', e.message, Math.round(performance.now() - t0)));
+    }
+    setInterval(() => warmUp('timer'), 4 * 60 * 1000);
+
     function lockResult(on, note) {
       ['retry-btn', 'choose-btn'].forEach(id => $(id).disabled = on);
       $('r-lock').textContent = on ? (note || '') : '';
@@ -1582,6 +1607,7 @@
     setLevel(LEVELS[pref.level] ? pref.level : 'beginner');
     startRankRefresh(); flushQueue();
     oplog('open_page', 'home', 'success');
+    warmUp('page open');
     $('device-label').textContent = cfg().device;
     /* How to play: shown when the page opens (guests change all day) and from "❓ How to play" */
     function openHowto(why) { $('howto').classList.remove('hidden'); oplog('open_howto', 'home', 'success', why); }
