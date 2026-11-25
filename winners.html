@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>Instagram Winners · Staff</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root { --ink: #111116; --muted: #6E6E7A; --line: #E4E4EA; --surface: #F5F5F7; --accent: #2546FF; --accent-soft: #EEF1FF;
+            --ok: #12A150; --ok-soft: #E8F7EE; --warn: #B26A00; --warn-soft: #FFF4D6; --ng: #E5383B; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Inter, system-ui, sans-serif; color: var(--ink); background: var(--surface); -webkit-font-smoothing: antialiased; }
+    button { font: inherit; cursor: pointer; }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 18px 16px 60px; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .eyebrow { font-size: .72rem; font-weight: 700; letter-spacing: .14em; color: var(--muted); }
+    h1 { font-size: 1.6rem; font-weight: 800; letter-spacing: -.02em; margin-top: 2px; }
+    .icon-btn { background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 9px 14px; font-weight: 600; font-size: .9rem; }
+    .bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+    .seg { display: inline-flex; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+    .seg button { border: 0; background: none; padding: 9px 14px; border-radius: 999px; font-weight: 600; font-size: .9rem; color: var(--muted); }
+    .seg button.on { background: var(--ink); color: #fff; }
+    .status { font-size: .82rem; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #C4C4CC; }
+    .dot.on { background: var(--ok); } .dot.off { background: var(--ng); } .dot.demo { background: #F2A900; }
+    .help { margin-top: 12px; font-size: .85rem; color: var(--muted); line-height: 1.5; }
+    .card { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 16px; margin-top: 14px; }
+    .card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .card-head h2 { font-size: 1.1rem; font-weight: 800; }
+    .card-head .sub { font-size: .8rem; color: var(--muted); font-weight: 500; margin-left: 6px; }
+    .badge { font-size: .75rem; font-weight: 800; padding: 5px 10px; border-radius: 999px; white-space: nowrap; }
+    .badge.new { background: var(--accent); color: #fff; }
+    .badge.done { background: var(--ok-soft); color: var(--ok); }
+    .badge.none { background: var(--surface); color: var(--muted); }
+    .body { display: flex; gap: 14px; margin-top: 12px; align-items: flex-start; }
+    .thumb { width: 96px; flex: 0 0 96px; aspect-ratio: 9 / 16; border-radius: 12px; overflow: hidden; background: var(--surface); }
+    .thumb img { width: 100%; height: 100%; display: block; }
+    .info { flex: 1; min-width: 0; }
+    .nick { font-size: 1.35rem; font-weight: 800; letter-spacing: -.01em; }
+    .score { font-size: .95rem; color: var(--muted); margin-top: 2px; }
+    .ig { margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; background: var(--accent-soft); color: var(--accent); font-weight: 700; border-radius: 10px; padding: 6px 10px; font-size: .92rem; word-break: break-all; }
+    .note { margin-top: 10px; font-size: .82rem; line-height: 1.45; padding: 8px 10px; border-radius: 10px; background: var(--warn-soft); color: var(--warn); }
+    .note.grey { background: var(--surface); color: var(--muted); }
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+    .btn { border: 0; border-radius: 12px; padding: 13px 10px; font-weight: 700; font-size: .95rem; background: var(--ink); color: #fff; }
+    .btn.ghost { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+    .btn.okb { background: var(--ok); }
+    .btn.full { grid-column: 1 / -1; }
+    .btn:disabled { opacity: .4; cursor: default; }
+    .empty { text-align: center; color: var(--muted); padding: 18px 0 6px; font-size: .92rem; }
+    /* overlays */
+    .overlay { position: fixed; inset: 0; background: rgba(17,17,22,.55); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 20; }
+    .hidden { display: none !important; }
+    .panel { background: #fff; border-radius: 20px; padding: 22px; width: min(440px, 100%); max-height: 92vh; overflow-y: auto; }
+    .panel h3 { font-size: 1.2rem; font-weight: 800; }
+    .panel p { font-size: .9rem; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+    .panel label { display: block; font-size: .8rem; font-weight: 700; margin-top: 14px; }
+    .panel input { width: 100%; margin-top: 6px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; font: inherit; font-size: 1rem; }
+    .panel .row { display: flex; gap: 8px; margin-top: 18px; }
+    .panel .row .btn { flex: 1; }
+    .err { color: var(--ng); font-size: .85rem; margin-top: 8px; min-height: 1.2em; }
+    .big-img { width: 100%; max-width: 260px; display: block; margin: 14px auto 0; border-radius: 14px; box-shadow: 0 10px 30px -10px rgba(0,0,0,.4); }
+    .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 999px; font-weight: 600; font-size: .9rem; z-index: 30; max-width: 92vw; text-align: center; }
+    .loading { text-align: center; padding: 30px 0; color: var(--muted); }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">CASIO · STAFF ONLY</div>
+      <h1>📸 Instagram Winners</h1>
+    </div>
+    <button class="icon-btn" id="open-set">⚙ Settings</button>
+  </header>
+
+  <div class="bar">
+    <div class="seg" id="games">
+      <button data-g="piano" class="on">🎹 Piano Challenge</button>
+      <button data-g="peekaboo">🐾 Animal Peekaboo</button>
+    </div>
+  </div>
+  <div class="bar">
+    <button class="icon-btn" id="refresh">↻ Refresh</button>
+    <div class="status"><span class="dot" id="dot"></span><span id="status-text">Loading…</span></div>
+  </div>
+  <p class="help">Post the levels marked <b style="color:var(--accent)">NEW</b>. Tap <b>Share card</b> → choose Instagram → add the @mention sticker → post. Then tap <b>Mark as posted</b>.</p>
+
+  <div id="list"><div class="loading">Loading…</div></div>
+</div>
+
+<!-- Settings -->
+<div class="overlay hidden" id="set">
+  <div class="panel">
+    <h3>⚙ Settings</h3>
+    <p>Kept on this phone only. Use the same URL and key as the game iPads.</p>
+    <label for="s-url">Score sheet URL (…/exec)</label>
+    <input id="s-url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec">
+    <label for="s-key">Key</label>
+    <input id="s-key" type="password" autocomplete="off">
+    <label for="s-staff">Your name (saved with each post)</label>
+    <input id="s-staff" maxlength="20" autocomplete="off" placeholder="e.g. Rahul">
+    <div class="err" id="s-err"></div>
+    <div class="row">
+      <button class="btn ghost" id="s-close">Cancel</button>
+      <button class="btn" id="s-save">Save</button>
+    </div>
+    <div class="row"><button class="btn ghost" id="s-demo" style="font-weight:600">👀 Try with sample data</button></div>
+  </div>
+</div>
+
+<!-- Confirm -->
+<div class="overlay hidden" id="confirm">
+  <div class="panel">
+    <h3 id="c-title"></h3>
+    <p id="c-text"></p>
+    <div class="row">
+      <button class="btn ghost" id="c-no">Cancel</button>
+      <button class="btn okb" id="c-yes">Yes, posted</button>
+    </div>
+  </div>
+</div>
+
+<!-- Save image (when the share menu is not available) -->
+<div class="overlay hidden" id="save">
+  <div class="panel" style="text-align:center">
+    <h3>Save the card</h3>
+    <p>Press and hold the picture, then tap <b>Save to Photos</b>.</p>
+    <img class="big-img" id="save-img" alt="Winner card">
+    <div class="row">
+      <a class="btn ghost" id="save-dl" download="casio-winner.png" style="text-decoration:none;text-align:center">⬇ Download</a>
+      <button class="btn" id="save-close">Done</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ===== Change these for each event ===== */
+  const EVENT_NAME = 'HORNBILL FESTIVAL 2026';
+  const HASHTAGS = '#CASIO #CASIOMusic #HornbillFestival';
+  const AUTO_REFRESH_MS = 5 * 60 * 1000;
+
+  const GAME_NAME = { piano: 'Piano Challenge', peekaboo: 'Animal Peekaboo' };
+  const LEVEL_NAME = { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' };
+  const SONG = { mary: 'Mary Had a Little Lamb', jingle: 'Jingle Bells', twinkle: 'Twinkle Twinkle Little Star', ode: 'Ode to Joy',
+    birthday: 'Happy Birthday', christmas: 'We Wish You a Merry Christmas', minuet: 'Minuet in G', elise: 'Für Elise',
+    mountain: 'In the Hall of the Mountain King', turkish: 'Turkish March' };
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const store = {
+    get(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+  };
+  // URL + key are SHARED with the games (same site → same storage), so a phone already set up for a game works here too.
+  const K = { cfg: 'peekaboo.settings', staff: 'winners.staff', log: 'winners.log', game: 'winners.game' };
+  const cfg = () => store.get(K.cfg, { device: 'Booth-1', url: '', key: '' });
+  let DEMO = /[?&]demo=1/.test(location.search);
+  let GAME = store.get(K.game, 'piano'), DATA = null;
+
+  /* ---------- Operation log: JSON Lines on this phone. Never stores the key or Instagram IDs. Newest 500. ---------- */
+  function oplog(action, target, result, detail, ms) {
+    try {
+      const now = new Date();
+      const row = { ts_utc: now.toISOString(), ts_local: now.toLocaleString(), user: store.get(K.staff, '') || '-', page: 'winners',
+        action, target: target || '', result: result || 'success', detail: detail || '', ms: ms || 0, ua: navigator.userAgent.slice(0, 80) };
+      const lines = (localStorage.getItem(K.log) || '').split('\n').filter(Boolean);
+      lines.push(JSON.stringify(row));
+      localStorage.setItem(K.log, lines.slice(-500).join('\n'));
+    } catch (e) { /* a logging failure never stops the page */ }
+  }
+  function toast(t, ms = 2600) { const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), ms); }
+  function setStatus(state, text) { $('dot').className = 'dot ' + state; $('status-text').textContent = text; }
+
+  /* ---------- Network: text/plain POST → no CORS preflight (Apps Script cannot answer one). ---------- */
+  async function api(body) {
+    const c = cfg(); if (!c.url || !c.key) throw new Error('not set up');
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 15000);
+    try {
+      const r = await fetch(c.url, { method: 'POST', body: JSON.stringify(Object.assign({ key: c.key, device: 'staff-phone' }, body)), signal: ctl.signal });
+      return await r.json();
+    } finally { clearTimeout(t); }
+  }
+
+  /* ---------- Sample data (Try with sample data / ?demo=1) ---------- */
+  const demoPosted = {};
+  function demoData() {
+    const mk = (game, level, players, top, pick, lastPosted) => ({ game, level, players, top, pick, lastPosted: demoPosted[game + level] || lastPosted || null,
+      isNew: !!pick && !(demoPosted[game + level] && demoPosted[game + level].play_id === pick.id) && !(lastPosted && lastPosted.play_id === pick.id) });
+    return { ok: true, date: new Date().toISOString().slice(0, 10), now: new Date().toTimeString().slice(0, 5), winners: [
+      mk('piano', 'beginner', 21, { nickname: 'PIA', score: 5120, agreed: true }, { nickname: 'PIA', score: 5120, insta: 'pia.music', id: 'd1', variant: 'mary', accuracy: 98, time: '13:42', rank: 1 },
+        { time: '13:00', nickname: 'PIA', score: 5120, play_id: 'd1' }),
+      mk('piano', 'intermediate', 37, { nickname: 'STAR_RAJ', score: 8420, agreed: true }, { nickname: 'STAR_RAJ', score: 8420, insta: 'raj.plays.keys', id: 'd2', variant: 'jingle', accuracy: 96, time: '14:05', rank: 1 },
+        { time: '13:00', nickname: 'KEYKING', score: 7310, play_id: 'd0' }),
+      mk('piano', 'advanced', 9, { nickname: 'Tenzin', score: 9650, agreed: false }, { nickname: 'Ao_7', score: 9020, insta: 'ao_seven', id: 'd3', variant: 'elise', accuracy: 91, time: '12:18', rank: 2 }),
+      mk('peekaboo', 'beginner', 44, { nickname: 'Mimi', score: 3210, agreed: true }, { nickname: 'Mimi', score: 3210, insta: 'mimi.and.mom', id: 'd4', variant: 'animals', accuracy: 88, time: '14:11', rank: 1 }),
+      mk('peekaboo', 'intermediate', 12, { nickname: 'LUCKY', score: 4100, agreed: false }, null),
+      mk('peekaboo', 'advanced', 0, null, null)
+    ] };
+  }
+
+  /* ---------- Load ---------- */
+  let loading = false;
+  async function load(manual) {
+    if (loading) return; loading = true;
+    const t0 = performance.now();
+    try {
+      if (DEMO) { DATA = demoData(); setStatus('demo', 'Sample data — not real players'); render(); return; }
+      if (!cfg().url || !cfg().key) { setStatus('', 'Not set up yet'); $('list').innerHTML = `<div class="card empty">Tap <b>⚙ Settings</b> and enter the score sheet URL and key.</div>`; return; }
+      setStatus('', 'Loading…');
+      const r = await api({ action: 'winners' });
+      const ms = Math.round(performance.now() - t0);
+      if (!r.ok) {
+        oplog('load', 'winners', 'failed', r.error, ms);
+        if (r.error === 'wrong key') { setStatus('off', 'The key is wrong — check ⚙ Settings'); }
+        else if (r.error === 'nickname missing') { setStatus('off', 'The score sheet needs the update (Code.gs v3)'); }
+        else setStatus('off', 'Could not load: ' + r.error);
+        return;
+      }
+      DATA = r; oplog('load', 'winners', 'success', manual ? 'manual' : 'auto', ms);
+      setStatus('on', `Updated ${r.now} · today ${r.date}`); render();
+    } catch (e) {
+      oplog('load', 'winners', 'failed', e.name === 'AbortError' ? 'timeout' : e.message, Math.round(performance.now() - t0));
+      setStatus('off', 'Offline — check the internet and tap Refresh');
+    } finally { loading = false; }
+  }
+
+  /* ---------- Render ---------- */
+  async function render() {
+    if (!DATA) return;
+    const rows = DATA.winners.filter(w => w.game === GAME);
+    $('list').innerHTML = rows.map((w, i) => {
+      const p = w.pick, lp = w.lastPosted;
+      const badge = !p ? `<span class="badge none">Nothing to post</span>` : w.isNew ? `<span class="badge new">NEW</span>` : `<span class="badge done">✓ Posted ${esc(lp.time)}</span>`;
+      let body;
+      if (!w.top) body = `<div class="empty">No players yet today.</div>`;
+      else if (!p) body = `<div class="note grey">#1 is <b>${esc(w.top.nickname)}</b> (${w.top.score.toLocaleString()} pts), but nobody in this level agreed to Instagram yet. Do not post.</div>`;
+      else {
+        const notTop = p.rank > 1 ? `<div class="note">#1 <b>${esc(w.top.nickname)}</b> did not agree to Instagram, so this card shows <b>#${p.rank} ${esc(p.nickname)}</b> (the best player who agreed).</div>` : '';
+        const newTop = w.isNew && lp ? `<div class="note grey">Last post at ${esc(lp.time)}: ${esc(lp.nickname)} (${Number(lp.score).toLocaleString()} pts)</div>` : '';
+        body = `<div class="body">
+            <div class="thumb"><img id="th-${i}" alt=""></div>
+            <div class="info">
+              <div class="nick">${esc(p.nickname)}</div>
+              <div class="score">${p.score.toLocaleString()} pts · played ${esc(p.time)}</div>
+              <div class="ig">@${esc(p.insta)}</div>
+            </div>
+          </div>${notTop}${newTop}
+          <div class="actions">
+            <button class="btn" data-act="share" data-i="${i}">📤 Share card</button>
+            <button class="btn ghost" data-act="caption" data-i="${i}">📋 Copy caption</button>
+            <button class="btn ghost full" data-act="posted" data-i="${i}" ${w.isNew ? '' : 'disabled'}>${w.isNew ? '✓ Mark as posted' : '✓ Already posted'}</button>
+          </div>`;
+      }
+      return `<div class="card"><div class="card-head"><h2>${LEVEL_NAME[w.level]}<span class="sub">${w.players} player${w.players === 1 ? '' : 's'} today</span></h2>${badge}</div>${body}</div>`;
+    }).join('');
+    $('list').querySelectorAll('[data-act]').forEach(b => b.onclick = () => action(b.dataset.act, rows[Number(b.dataset.i)]));
+    // thumbnails (small preview of the real card)
+    for (let i = 0; i < rows.length; i++) {
+      const img = $('th-' + i); if (!img) continue;
+      const cv = await drawCard(rows[i]); img.src = cv.toDataURL('image/jpeg', .7);
+    }
+  }
+
+  /* ---------- Winner card: drawn in the browser (Canvas), 1080 × 1920 = Instagram Story size ---------- */
+  async function drawCard(w) {
+    try { await document.fonts.load('800 100px Inter'); await document.fonts.load('600 40px Inter'); } catch (e) {}
+    const p = w.pick, W = 1080, H = 1920, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    const x = cv.getContext('2d'), F = (wt, px) => `${wt} ${px}px Inter, system-ui, sans-serif`;
+    const g = x.createLinearGradient(0, 0, W * .6, H); g.addColorStop(0, '#1B2BFF'); g.addColorStop(.45, '#2546FF'); g.addColorStop(1, '#0B0F3A');
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+    x.textAlign = 'center'; x.textBaseline = 'alphabetic';
+    const spaced = (t, y, font, color, sp) => { x.font = font; x.fillStyle = color; if ('letterSpacing' in x) { x.letterSpacing = sp + 'px'; x.fillText(t, W / 2 + sp / 2, y); x.letterSpacing = '0px'; } else x.fillText(t, W / 2, y); };
+    // fit text into a width by shrinking the font
+    const fit = (t, y, wt, px, max, color) => { x.font = F(wt, px); while (x.measureText(t).width > max && px > 30) { px -= 4; x.font = F(wt, px); } x.fillStyle = color; x.fillText(t, W / 2, y); };
+    spaced('CASIO', 205, F(800, 58), '#fff', 18);
+    spaced(EVENT_NAME + ' · ' + GAME_NAME[w.game].toUpperCase(), 275, F(500, 30), 'rgba(255,255,255,.8)', 4);
+    x.font = '210px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif'; x.fillText('🏆', W / 2, 700);
+    const label = p.rank > 1 ? `TODAY'S TOP PLAYER · ${LEVEL_NAME[w.level].toUpperCase()}` : `TODAY'S #1 · ${LEVEL_NAME[w.level].toUpperCase()}`;
+    spaced(label, 805, F(700, 42), '#FFD54A', 8);
+    fit(p.nickname, 980, 800, 160, 940, '#fff');
+    x.font = F(800, 118); const sc = p.score.toLocaleString(); const sw = x.measureText(sc).width; x.font = F(600, 46); const pw = x.measureText(' pts').width;
+    x.textAlign = 'left'; x.font = F(800, 118); x.fillStyle = '#fff'; x.fillText(sc, (W - sw - pw) / 2, 1125);
+    x.font = F(600, 46); x.fillStyle = 'rgba(255,255,255,.75)'; x.fillText(' pts', (W - sw - pw) / 2 + sw, 1125); x.textAlign = 'center';
+    const detail = (w.game === 'piano' && SONG[p.variant] ? '🎹 ' + SONG[p.variant] + ' · ' : '🐾 ') + p.accuracy + '% accuracy';
+    x.font = F(700, 38); const dw = Math.min(980, x.measureText(detail).width + 80);
+    x.fillStyle = 'rgba(255,255,255,.15)'; roundRect(x, (W - dw) / 2, 1180, dw, 80, 40); x.fill();
+    fit(detail, 1233, 700, 38, dw - 60, '#fff');
+    x.font = F(500, 32); x.fillStyle = 'rgba(255,255,255,.7)'; x.fillText('as of ' + (DATA && DATA.now || ''), W / 2, 1320);
+    x.font = F(700, 48); x.fillStyle = '#fff'; x.fillText('Can you beat this score?', W / 2, 1500);
+    x.font = F(500, 34); x.fillStyle = 'rgba(255,255,255,.78)'; x.fillText('Play at the CASIO booth 🎶', W / 2, 1562);
+    // the space under this line is left empty on purpose → staff put the @mention sticker there
+    return cv;
+  }
+  function roundRect(x, l, t, w, h, r) { x.beginPath(); x.moveTo(l + r, t); x.arcTo(l + w, t, l + w, t + h, r); x.arcTo(l + w, t + h, l, t + h, r); x.arcTo(l, t + h, l, t, r); x.arcTo(l, t, l + w, t, r); x.closePath(); }
+
+  const caption = w => `Congrats @${w.pick.insta}! 🏆 Today's top score in ${GAME_NAME[w.game]} (${LEVEL_NAME[w.level]}): ${w.pick.score.toLocaleString()} pts. Can you beat it? Come and play at the CASIO booth 🎹 ${HASHTAGS}`;
+
+  /* ---------- Actions ---------- */
+  async function action(act, w) {
+    const t0 = performance.now(), target = `${w.game}/${w.level}/${w.pick ? w.pick.nickname : ''}`;
+    if (act === 'share') {
+      const cv = await drawCard(w);
+      const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
+      const file = new File([blob], `casio-winner-${w.game}-${w.level}.png`, { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try { await navigator.share({ files: [file] }); oplog('share_card', target, 'success', 'share menu', Math.round(performance.now() - t0)); }
+        catch (e) { oplog('share_card', target, e.name === 'AbortError' ? 'cancelled' : 'failed', e.message, Math.round(performance.now() - t0)); }
+      } else {   // no share menu (older browser / PC) → show the picture to save
+        const url = cv.toDataURL('image/png'); $('save-img').src = url; $('save-dl').href = url; $('save-dl').download = file.name;
+        $('save').classList.remove('hidden'); oplog('share_card', target, 'success', 'save screen', Math.round(performance.now() - t0));
+      }
+    }
+    if (act === 'caption') {
+      const text = caption(w);
+      let ok = false;
+      try { await navigator.clipboard.writeText(text); ok = true; } catch (e) {
+        const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
+        try { ok = document.execCommand('copy'); } catch (e2) {} ta.remove();
+      }
+      oplog('copy_caption', target, ok ? 'success' : 'failed'); toast(ok ? '✓ Caption copied — paste it in Instagram' : 'Could not copy. Please type it by hand.');
+    }
+    if (act === 'posted') {
+      $('c-title').textContent = 'Did you post this card?';
+      $('c-text').innerHTML = `<b>${esc(w.pick.nickname)}</b> · ${LEVEL_NAME[w.level]} · ${w.pick.score.toLocaleString()} pts<br>This level will stop showing NEW until the #1 changes.`;
+      $('confirm').classList.remove('hidden');
+      $('c-yes').onclick = async () => {
+        $('confirm').classList.add('hidden');
+        if (DEMO) { demoPosted[w.game + w.level] = { time: new Date().toTimeString().slice(0, 5), nickname: w.pick.nickname, score: w.pick.score, play_id: w.pick.id }; oplog('mark_posted', target, 'success', 'demo'); toast('✓ Marked as posted (sample data)'); load(); return; }
+        try {
+          const r = await api({ action: 'posted', game: w.game, level: w.level, playId: w.pick.id, nickname: w.pick.nickname, score: w.pick.score, insta: w.pick.insta, staff: store.get(K.staff, '') });
+          oplog('mark_posted', target, r.ok ? 'success' : 'failed', r.ok ? '' : r.error, Math.round(performance.now() - t0));
+          if (r.ok) { toast('✓ Marked as posted'); load(true); } else toast('Could not save: ' + r.error + '. Try again.', 4000);
+        } catch (e) { oplog('mark_posted', target, 'failed', e.message, Math.round(performance.now() - t0)); toast('No internet. Try again when it is back.', 4000); }
+      };
+    }
+  }
+  $('c-no').onclick = () => $('confirm').classList.add('hidden');
+  $('save-close').onclick = () => $('save').classList.add('hidden');
+
+  /* ---------- Game tabs, refresh, settings ---------- */
+  function syncTabs() { document.querySelectorAll('#games button').forEach(b => b.classList.toggle('on', b.dataset.g === GAME)); }
+  document.querySelectorAll('#games button').forEach(b => b.onclick = () => { GAME = b.dataset.g; store.set(K.game, GAME); syncTabs(); render(); });
+  $('refresh').onclick = () => load(true);
+  $('open-set').onclick = () => { const c = cfg(); $('s-url').value = c.url; $('s-key').value = c.key; $('s-staff').value = store.get(K.staff, ''); $('s-err').textContent = ''; $('set').classList.remove('hidden'); };
+  $('s-close').onclick = () => $('set').classList.add('hidden');
+  $('s-save').onclick = () => {
+    const url = $('s-url').value.trim(), key = $('s-key').value.trim();
+    if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(url)) { $('s-err').textContent = 'The URL should start with https://script.google.com/ and end with /exec'; return; }
+    if (!key) { $('s-err').textContent = 'Enter the key (ask the person who set up the sheet).'; return; }
+    const c = cfg(); store.set(K.cfg, Object.assign({}, c, { url, key })); store.set(K.staff, $('s-staff').value.trim().slice(0, 20));
+    oplog('save_settings', 'settings', 'success', 'staff ' + ($('s-staff').value.trim() || '-'));
+    DEMO = false; $('set').classList.add('hidden'); toast('✓ Settings saved'); load(true);
+  };
+  $('s-demo').onclick = () => { DEMO = true; $('set').classList.add('hidden'); load(true); };
+
+  syncTabs(); load();
+  setInterval(() => { if (!document.hidden) load(); }, AUTO_REFRESH_MS);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
+</script>
+</body>
+</html>
