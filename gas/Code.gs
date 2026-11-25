@@ -10,6 +10,13 @@
  *   After pasting this version: Deploy → Manage deployments → ✏ Edit → Version: New version → Deploy
  *   (the /exec URL stays the same, so no device needs new settings).
  *
+ * v3 (2026-11-25): Instagram winners.
+ *   - 2 new columns at the end of "plays": insta, insta_ok (filled later by action "insta").
+ *   - POST action "winners" (key needed): today's #1 per game × level, with the Instagram ID
+ *     ONLY of players who agreed. The public GET ranking never returns Instagram IDs.
+ *   - POST action "posted" (key needed): staff mark a card as posted → "posts" sheet.
+ *   Deploy the same way as v2 (Edit → New version), the URL stays the same.
+ *
  * Setup (once):
  *   1. Create a new Google Sheet → Extensions → Apps Script → paste this file.
  *   2. Project Settings → Script properties → add  KEY = <any secret word, e.g. 8+ letters>.
@@ -24,6 +31,7 @@
  * Sheets:
  *   plays : 1 row = 1 play (this is the history)
  *   log   : operation log (who sent what, result, ms) — separate from plays on purpose
+ *   posts : 1 row = 1 Instagram post made by staff (used for "NEW" and to avoid double posts)
  */
 
 const KEEP_DAYS = 365;
@@ -32,13 +40,16 @@ const GAMES = ['peekaboo', 'piano'];
 const MAX_SCORE = 20000;   // anything above this is treated as a broken/fake request
 // "game" is the LAST column on purpose: existing sheets keep their columns, the header cell is added on the fly
 const PLAY_HEAD = ['id', 'ts_utc', 'ts_local', 'date', 'device', 'nickname', 'level', 'variant',
-                   'score', 'rank_letter', 'cleared', 'max_combo', 'accuracy', 'input', 'user_agent', 'is_test', 'game'];
+                   'score', 'rank_letter', 'cleared', 'max_combo', 'accuracy', 'input', 'user_agent', 'is_test', 'game',
+                   'insta', 'insta_ok'];
 const game_ = g => (GAMES.indexOf(g) >= 0 ? g : 'peekaboo');
 const LOG_HEAD = ['ts_utc', 'ts_local', 'action', 'device', 'target', 'result', 'detail', 'ms'];
+const POST_HEAD = ['ts_utc', 'ts_local', 'date', 'game', 'level', 'nickname', 'score', 'insta', 'play_id', 'staff'];
 
 function setup() {
   sheet_('plays', PLAY_HEAD);
   sheet_('log', LOG_HEAD);
+  sheet_('posts', POST_HEAD);
 }
 
 /* ---------- GET: ping / ranking ---------- */
@@ -46,7 +57,7 @@ function doGet(e) {
   const t0 = Date.now(), p = (e && e.parameter) || {};
   try {
     // "games" tells new pages that this server understands the game column (v2)
-    if (p.action === 'ping') return json_({ ok: true, time: new Date().toISOString(), version: 2, games: GAMES });
+    if (p.action === 'ping') return json_({ ok: true, time: new Date().toISOString(), version: 3, games: GAMES });
     if (p.action === 'ranking') {
       const level = LEVELS.indexOf(p.level) >= 0 ? p.level : 'beginner', game = game_(p.game);
       const r = ranking_(game, level, p.date || today_(), p.test === '1');
@@ -72,6 +83,15 @@ function doPost(e) {
   if (!key || d.key !== key) {
     log_('add', d.device, '', 'failed', 'wrong key', Date.now() - t0);
     return json_({ ok: false, error: 'wrong key' });
+  }
+  // staff / follow-up actions (all need the key, checked above)
+  try {
+    if (d.action === 'insta') return setInsta_(d, t0);
+    if (d.action === 'winners') { const w = winners_(); log_('winners', d.device, 'staff', 'success', '', Date.now() - t0); return json_(w); }
+    if (d.action === 'posted') return posted_(d, t0);
+  } catch (err) {
+    log_(d.action, d.device, '', 'failed', String(err), Date.now() - t0);
+    return json_({ ok: false, error: 'server error' });
   }
   const bad = validate_(d);
   if (bad) {
@@ -101,9 +121,17 @@ function doPost(e) {
 }
 
 /* ---------- ranking: best score per nickname, per game, per level, per day ---------- */
+// Public: only nickname / score / device / time. Never add Instagram fields here (anyone can call GET).
 function ranking_(game, level, date, includeTest) {
+  return bestRows_(playRows_(), game, level, date, includeTest)
+    .map(b => ({ nickname: b.nickname, score: b.score, device: b.device, time: b.time }));
+}
+function playRows_() {
   const sh = sheet_('plays', PLAY_HEAD);
-  const rows = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, PLAY_HEAD.length).getValues() : [];
+  return sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, PLAY_HEAD.length).getValues() : [];
+}
+// best row per nickname (internal: also keeps the row's id and Instagram consent)
+function bestRows_(rows, game, level, date, includeTest) {
   const c = name => PLAY_HEAD.indexOf(name);
   const best = {};
   rows.forEach(r => {
@@ -111,9 +139,58 @@ function ranking_(game, level, date, includeTest) {
     if (game_(String(r[c('game')] || '')) !== game) return;   // empty (old rows) → peekaboo
     if (!includeTest && r[c('is_test')] === true) return;
     const n = String(r[c('nickname')]), s = Number(r[c('score')]);
-    if (!best[n] || s > best[n].score) best[n] = { nickname: n, score: s, device: r[c('device')], time: cell_(r[c('ts_local')], 'yyyy-MM-dd HH:mm:ss').slice(11, 16) };
+    if (!best[n] || s > best[n].score) best[n] = { nickname: n, score: s, device: r[c('device')],
+      time: cell_(r[c('ts_local')], 'yyyy-MM-dd HH:mm:ss').slice(11, 16), id: String(r[c('id')]),
+      variant: String(r[c('variant')] || ''), accuracy: Number(r[c('accuracy')]) || 0,
+      insta: r[c('insta_ok')] === true ? String(r[c('insta')] || '') : '' };
   });
   return Object.values(best).sort((a, b) => b.score - a.score);
+}
+
+/* ---------- Instagram (v3) ---------- */
+// The player agreed on the result screen → store the ID on THAT play row. No agreement → store nothing.
+function setInsta_(d, t0) {
+  const insta = String(d.insta || '').replace(/^@+/, '').trim();
+  if (!d.id) return json_({ ok: false, error: 'id missing' });
+  if (d.agree !== true || d.adult !== true) return json_({ ok: false, error: 'no consent' });
+  if (!/^[A-Za-z0-9._]{1,30}$/.test(insta)) return json_({ ok: false, error: 'bad instagram id' });
+  const sh = sheet_('plays', PLAY_HEAD);
+  const cell = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, 1).createTextFinder(d.id).matchEntireCell(true).findNext() : null;
+  if (!cell) { log_('insta', d.device, d.id, 'failed', 'play not found', Date.now() - t0); return json_({ ok: false, error: 'play not found' }); }
+  sh.getRange(cell.getRow(), PLAY_HEAD.indexOf('insta') + 1, 1, 2).setValues([[insta, true]]);
+  log_('insta', d.device, d.id, 'success', 'consent saved', Date.now() - t0);   // the ID itself is not logged
+  return json_({ ok: true });
+}
+// Today's #1 per game × level. "pick" = best player who agreed (may differ from #1).
+function winners_() {
+  const rows = playRows_(), date = today_(), last = lastPosts_(date), out = [];
+  GAMES.forEach(game => LEVELS.forEach(level => {
+    const list = bestRows_(rows, game, level, date, false);
+    const pick = list.find(b => b.insta) || null, lp = last[game + '|' + level] || null;
+    out.push({ game, level, players: list.length,
+      top: list[0] ? { nickname: list[0].nickname, score: list[0].score, agreed: !!list[0].insta } : null,
+      pick: pick ? { nickname: pick.nickname, score: pick.score, insta: pick.insta, id: pick.id, variant: pick.variant,
+                     accuracy: pick.accuracy, time: pick.time, rank: list.indexOf(pick) + 1 } : null,
+      lastPosted: lp, isNew: !!pick && (!lp || lp.play_id !== pick.id) });
+  }));
+  return { ok: true, date, now: local_(new Date()).slice(11, 16), winners: out };
+}
+function lastPosts_(date) {
+  const sh = sheet_('posts', POST_HEAD), m = {};
+  if (sh.getLastRow() < 2) return m;
+  sh.getRange(2, 1, sh.getLastRow() - 1, POST_HEAD.length).getValues().forEach(r => {
+    if (cell_(r[2], 'yyyy-MM-dd') !== date) return;
+    m[r[3] + '|' + r[4]] = { time: cell_(r[1], 'yyyy-MM-dd HH:mm:ss').slice(11, 16), nickname: String(r[5]), score: Number(r[6]), play_id: String(r[8]) };
+  });
+  return m;
+}
+function posted_(d, t0) {
+  if (GAMES.indexOf(d.game) < 0 || LEVELS.indexOf(d.level) < 0 || !d.playId) return json_({ ok: false, error: 'bad request' });
+  const n = new Date();
+  sheet_('posts', POST_HEAD).appendRow([n.toISOString(), local_(n), today_(), d.game, d.level, clean_(d.nickname, 10),
+    Number(d.score) || 0, clean_(d.insta, 30), clean_(d.playId, 60), clean_(d.staff || '', 20)]);
+  log_('posted', d.device, d.game + ' / ' + d.level + ' / ' + clean_(d.nickname, 10), 'success', 'by ' + clean_(d.staff || '-', 20), Date.now() - t0);
+  return json_({ ok: true });
 }
 
 /* ---------- retention ---------- */
